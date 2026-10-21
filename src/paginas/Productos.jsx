@@ -1,5 +1,11 @@
 import { useEffect, useState } from "react";
-import { enviar, obtener } from "../api.js";
+import {
+  listarProductos,
+  obtenerProducto,
+  enviarFormularioProducto,
+  formatoPrecio,
+  datosDetalleProducto,
+} from "../js/productos.js";
 import Dialogo from "../componentes/Dialogo.jsx";
 import Detalle from "../componentes/Detalle.jsx";
 
@@ -18,6 +24,10 @@ function CamposProducto({ producto = {} }) {
   );
 }
 
+/*
+ * La pagina define el HTML y los mensajes que se muestran.
+ * La logica (llamadas al backend, formateo) esta en src/js/productos.js.
+ */
 export default function Productos() {
   const [productos, setProductos] = useState([]);
   const [mensaje, setMensaje] = useState({ texto: "", error: false });
@@ -28,7 +38,7 @@ export default function Productos() {
 
   async function cargar() {
     try {
-      setProductos(await obtener("/api/productos"));
+      setProductos(await listarProductos());
     } catch (e) {
       avisar(e.message, true);
     }
@@ -42,7 +52,7 @@ export default function Productos() {
     e.preventDefault();
     const form = e.currentTarget;
     try {
-      await enviar(form);
+      await enviarFormularioProducto(form);
       avisar("Producto agregado.");
       form.reset();
       cargar();
@@ -54,7 +64,7 @@ export default function Productos() {
   async function modificar(e) {
     e.preventDefault();
     try {
-      await enviar(e.currentTarget);
+      await enviarFormularioProducto(e.currentTarget);
       setEditando(null);
       avisar("Producto actualizado.");
       cargar();
@@ -67,7 +77,7 @@ export default function Productos() {
     e.preventDefault();
     if (!window.confirm("Borrar el producto " + producto.nombre + "?")) return;
     try {
-      await enviar(e.currentTarget);
+      await enviarFormularioProducto(e.currentTarget);
       avisar("Producto borrado.");
       cargar();
     } catch (err) {
@@ -77,7 +87,7 @@ export default function Productos() {
 
   async function verDetalle(id) {
     try {
-      setDetalle(await obtener("/api/productos/" + id));
+      setDetalle(await obtenerProducto(id));
     } catch (e) {
       avisar(e.message, true);
     }
@@ -124,7 +134,7 @@ export default function Productos() {
                 <tr key={p.id}>
                   <td>{p.id}</td>
                   <td>{p.nombre}</td>
-                  <td>$ {p.precio}</td>
+                  <td>{formatoPrecio(p.precio)}</td>
                   <td>{p.stock}</td>
                   <td className="acciones">
                     {/* DETALLE: GET /api/productos/{id} */}
@@ -144,11 +154,7 @@ export default function Productos() {
       </section>
 
       <Dialogo abierto={detalle !== null} onCerrar={() => setDetalle(null)} titulo="Detalle del producto">
-        {detalle && (
-          <Detalle
-            datos={[["ID", detalle.id], ["Nombre", detalle.nombre], ["Precio", "$ " + detalle.precio], ["Stock", detalle.stock]]}
-          />
-        )}
+        {detalle && <Detalle datos={datosDetalleProducto(detalle)} />}
         <button type="button" className="secundario" onClick={() => setDetalle(null)}>Cerrar</button>
       </Dialogo>
 

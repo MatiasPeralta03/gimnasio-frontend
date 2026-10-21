@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { obtener } from "../api.js";
+import {
+  dinero,
+  productosConStock,
+  sociosActivos,
+  limitarCantidad,
+  armarItems,
+  calcularTotal,
+  FORMAS_DE_PAGO,
+} from "../js/compra.js";
 
-const dinero = (valor) => "$ " + Number(valor).toFixed(2);
-
+/*
+ * La pagina define el HTML y los mensajes que se muestran.
+ * La logica (carga de datos, calculos) esta en src/js/compra.js.
+ */
 export default function Compra() {
   const [paso, setPaso] = useState(1);
   const [mensaje, setMensaje] = useState({ texto: "", error: false });
@@ -16,15 +26,13 @@ export default function Compra() {
   const avisar = (texto, error = false) => setMensaje({ texto, error });
 
   useEffect(() => {
-    obtener("/api/productos")
-      .then((lista) => setProductos(lista.filter((p) => p.stock > 0)))
+    productosConStock()
+      .then(setProductos)
       .catch((e) => avisar(e.message, true));
   }, []);
 
-  const items = productos
-    .filter((p) => (cantidades[p.id] || 0) > 0)
-    .map((p) => ({ producto: p, cantidad: cantidades[p.id] }));
-  const total = items.reduce((suma, i) => suma + i.producto.precio * i.cantidad, 0);
+  const items = armarItems(productos, cantidades);
+  const total = calcularTotal(items);
   const socio = socios.find((s) => String(s.id) === String(socioId));
 
   function irA(n) {
@@ -32,12 +40,12 @@ export default function Compra() {
     avisar("");
   }
 
-  // PASO 1 -> 2 (GET /api/socios)
+  // PASO 1 -> 2
   async function continuar1(e) {
     e.preventDefault();
     if (items.length === 0) return avisar("Elegi al menos un producto.", true);
     try {
-      const activos = (await obtener("/api/socios")).filter((s) => s.activo);
+      const activos = await sociosActivos();
       if (activos.length === 0) return avisar("No hay socios activos para asignar la compra.", true);
       setSocios(activos);
       setSocioId(String(activos[0].id));
@@ -85,7 +93,7 @@ export default function Compra() {
                           value={cantidades[p.id] || 0}
                           aria-label={"Cantidad de " + p.nombre}
                           onChange={(e) =>
-                            setCantidades({ ...cantidades, [p.id]: Math.min(p.stock, Math.max(0, Number(e.target.value))) })
+                            setCantidades({ ...cantidades, [p.id]: limitarCantidad(e.target.value, p.stock) })
                           }
                         />
                       </td>
@@ -126,11 +134,7 @@ export default function Compra() {
 
               <fieldset>
                 <legend>Forma de pago</legend>
-                {[
-                  ["EFECTIVO", "Efectivo"],
-                  ["TRANSFERENCIA", "Transferencia"],
-                  ["DEUDA", "Anotar en la deuda del socio"],
-                ].map(([valor, texto]) => (
+                {FORMAS_DE_PAGO.map(([valor, texto]) => (
                   <label key={valor} className="opcion">
                     <input type="radio" name="pago" value={valor} checked={pago === valor} onChange={() => setPago(valor)} /> {texto}
                   </label>

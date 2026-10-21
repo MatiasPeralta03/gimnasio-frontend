@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { enviar, obtener } from "../api.js";
+import {
+  listarSocios,
+  obtenerSocio,
+  enviarFormularioSocio,
+  estadoDeSocio,
+  nombreCompleto,
+  datosDetalleSocio,
+} from "../js/socios.js";
 import Dialogo from "../componentes/Dialogo.jsx";
 import Detalle from "../componentes/Detalle.jsx";
 
@@ -40,6 +47,10 @@ function CamposSocio({ socio = {}, conDni }) {
   );
 }
 
+/*
+ * La pagina define el HTML y los mensajes que se muestran.
+ * La logica (llamadas al backend, formateo) esta en src/js/socios.js.
+ */
 export default function Socios() {
   const [socios, setSocios] = useState([]);
   const [mensaje, setMensaje] = useState({ texto: "", error: false });
@@ -50,7 +61,7 @@ export default function Socios() {
 
   async function cargar() {
     try {
-      setSocios(await obtener("/api/socios"));
+      setSocios(await listarSocios());
     } catch (e) {
       avisar(e.message, true);
     }
@@ -60,12 +71,11 @@ export default function Socios() {
     cargar();
   }, []);
 
-  // Cada handler envia el <form> tal cual lo declara el HTML (metodo + action).
   async function alta(e) {
     e.preventDefault();
     const form = e.currentTarget;
     try {
-      const socio = await enviar(form);
+      const socio = await enviarFormularioSocio(form);
       avisar("Socio creado. PIN asignado: " + socio.pin);
       form.reset();
       cargar();
@@ -77,7 +87,7 @@ export default function Socios() {
   async function modificar(e) {
     e.preventDefault();
     try {
-      await enviar(e.currentTarget);
+      await enviarFormularioSocio(e.currentTarget);
       setEditando(null);
       avisar("Socio actualizado.");
       cargar();
@@ -89,7 +99,7 @@ export default function Socios() {
   async function nuevoPin(e) {
     e.preventDefault();
     try {
-      const socio = await enviar(e.currentTarget);
+      const socio = await enviarFormularioSocio(e.currentTarget);
       avisar("Nuevo PIN de " + socio.nombre + ": " + socio.pin);
     } catch (err) {
       avisar(err.message, true);
@@ -98,9 +108,9 @@ export default function Socios() {
 
   async function baja(e, socio) {
     e.preventDefault();
-    if (!window.confirm("Dar de baja a " + socio.nombre + " " + socio.apellido + "?")) return;
+    if (!window.confirm("Dar de baja a " + nombreCompleto(socio) + "?")) return;
     try {
-      await enviar(e.currentTarget);
+      await enviarFormularioSocio(e.currentTarget);
       avisar("Socio dado de baja.");
       cargar();
     } catch (err) {
@@ -110,7 +120,7 @@ export default function Socios() {
 
   async function verDetalle(id) {
     try {
-      setDetalle(await obtener("/api/socios/" + id));
+      setDetalle(await obtenerSocio(id));
     } catch (e) {
       avisar(e.message, true);
     }
@@ -162,7 +172,7 @@ export default function Socios() {
                   <td>{s.nombre}</td>
                   <td>{s.apellido}</td>
                   <td>{s.membresia}</td>
-                  <td>{s.activo ? "Activo" : "Baja"}</td>
+                  <td>{estadoDeSocio(s)}</td>
                   <td className="acciones">
                     {/* DETALLE: GET /api/socios/{id} */}
                     <button type="button" className="secundario" onClick={() => verDetalle(s.id)}>Ver</button>
@@ -186,17 +196,7 @@ export default function Socios() {
       </section>
 
       <Dialogo abierto={detalle !== null} onCerrar={() => setDetalle(null)} titulo="Detalle del socio">
-        {detalle && (
-          <Detalle
-            datos={[
-              ["ID", detalle.id], ["DNI", detalle.dni], ["PIN", detalle.pin],
-              ["Nombre", detalle.nombre], ["Apellido", detalle.apellido], ["Email", detalle.email],
-              ["Telefono", detalle.telefono], ["Membresia", detalle.membresia],
-              ["Medio de pago", detalle.medioPago], ["Deuda", "$ " + detalle.deuda],
-              ["Estado", detalle.activo ? "Activo" : "Baja"], ["Fecha de alta", detalle.fechaAlta],
-            ]}
-          />
-        )}
+        {detalle && <Detalle datos={datosDetalleSocio(detalle)} />}
         <button type="button" className="secundario" onClick={() => setDetalle(null)}>Cerrar</button>
       </Dialogo>
 

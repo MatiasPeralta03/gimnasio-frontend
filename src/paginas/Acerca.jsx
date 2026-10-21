@@ -17,12 +17,11 @@ export default function Acerca() {
 
       <section>
         <h2>Integrantes del grupo</h2>
-        {/* TODO: reemplazar por los datos reales del grupo */}
         <ul>
-          <li><strong>Nombre Apellido</strong> - Legajo 000000</li>
-          <li><strong>Nombre Apellido</strong> - Legajo 000000</li>
-          <li><strong>Nombre Apellido</strong> - Legajo 000000</li>
-          <li><strong>Nombre Apellido</strong> - Legajo 000000</li>
+          <li>Ezequiel Ibarra</li>
+          <li>Lucas Bollini</li>
+          <li>Matias Peralta</li>
+          <li>Ignacio Barborini</li>
         </ul>
       </section>
 
@@ -30,7 +29,7 @@ export default function Acerca() {
         <h2>Tecnologias</h2>
         <ul>
           <li>Back-end: Java, Spring Boot, JPA/Hibernate, MySQL (API REST en JSON)</li>
-          <li>Front-end: React, HTML5 y CSS</li>
+          <li>Front-end: React, HTML5, CSS y JavaScript</li>
         </ul>
       </section>
     </>
