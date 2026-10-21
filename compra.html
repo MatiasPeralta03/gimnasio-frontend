@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Simulacion del proceso de compra en el kiosco del gimnasio">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/compra.js" defer></script>
+    <title>Gimnasio de Barrio - Comprar</title>
+</head>
+<body>
+    <header>
+        <h1>Gimnasio de Barrio</h1>
+        <nav aria-label="Navegacion principal">
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="socios.html">Socios</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="compra.html" aria-current="page">Comprar</a></li>
+                <li><a href="acerca.html">Acerca de</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Comprar en el kiosco</h2>
+        <p>Simulacion del proceso de compra: no se registra ninguna venta en el servidor.</p>
+        <p id="mensaje" class="mensaje" role="status"></p>
+
+        <!-- PASO 1: elegir productos. GET /api/productos -->
+        <section id="paso-1" aria-labelledby="titulo-paso-1">
+            <h3 id="titulo-paso-1">Paso 1 de 3: elegi los productos</h3>
+            <form id="form-productos" method="get" action="/api/productos?soloDisponibles=true"
+                  data-error-vacio="Elegi al menos un producto.">
+                <div class="contenedor-tabla">
+                    <table>
+                        <caption>Productos con stock</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Producto</th>
+                                <th scope="col">Precio</th>
+                                <th scope="col">Stock</th>
+                                <th scope="col">Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-compra" data-vacio="No hay productos con stock."></tbody>
+                    </table>
+                </div>
+                <div class="botonera">
+                    <button type="submit">Continuar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- PASO 2: socio y forma de pago. GET /api/socios -->
+        <section id="paso-2" class="oculto" aria-labelledby="titulo-paso-2">
+            <h3 id="titulo-paso-2">Paso 2 de 3: socio y forma de pago</h3>
+            <form id="form-pago" method="get" action="/api/socios"
+                  data-error-sin-socios="No hay socios activos para asignar la compra.">
+                <fieldset>
+                    <legend>Datos de la compra</legend>
+
+                    <label for="compra-socio">Socio</label>
+                    <select id="compra-socio" name="socio" required></select>
+
+                    <fieldset>
+                        <legend>Forma de pago</legend>
+                        <label class="opcion"><input type="radio" name="pago" value="EFECTIVO" checked> Efectivo</label>
+                        <label class="opcion"><input type="radio" name="pago" value="TRANSFERENCIA"> Transferencia</label>
+                        <label class="opcion"><input type="radio" name="pago" value="DEUDA"> Anotar en la deuda del socio</label>
+                    </fieldset>
+                </fieldset>
+                <div class="botonera">
+                    <button type="button" id="volver-1" class="secundario">Volver</button>
+                    <button type="submit">Continuar</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- PASO 3: confirmacion -->
+        <section id="paso-3" class="oculto" aria-labelledby="titulo-paso-3">
+            <h3 id="titulo-paso-3">Paso 3 de 3: confirma tu compra</h3>
+            <div class="contenedor-tabla">
+                <table>
+                    <caption>Resumen de la compra</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Producto</th>
+                            <th scope="col">Cantidad</th>
+                            <th scope="col">Precio</th>
+                            <th scope="col">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-resumen"></tbody>
+                    <tfoot>
+                        <tr>
+                            <th scope="row" colspan="3">Total</th>
+                            <td id="total"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <p id="resumen-datos"></p>
+            <div class="botonera">
+                <button type="button" id="volver-2" class="secundario">Volver</button>
+                <button type="button" id="confirmar" data-ok="Gracias! Tu compra por {total} fue registrada (simulacion).">Confirmar compra</button>
+            </div>
+        </section>
+
+        <!-- FIN -->
+        <section id="paso-4" class="oculto" aria-labelledby="titulo-paso-4">
+            <h3 id="titulo-paso-4">Compra realizada</h3>
+            <p id="texto-final"></p>
+            <p><a href="compra.html">Hacer otra compra</a></p>
+        </section>
+    </main>
+
+    <footer>
+        <p>Aplicaciones Interactivas - UADE - 2do Cuatrimestre 2026</p>
+    </footer>
+</body>
+</html>

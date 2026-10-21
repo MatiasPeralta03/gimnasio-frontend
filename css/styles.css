@@ -1,4 +1,4 @@
-/* Estilos simples. Sin fuentes ni recursos externos: solo fuentes del sistema. */
+/* Hoja de estilos compartida por todas las paginas. Sin fuentes ni recursos externos. */
 :root {
     --color-principal: #1b5e20;
     --color-oscuro: #14391a;
@@ -21,11 +21,16 @@ a { color: var(--color-principal); }
 
 /* ---------- Encabezado y navegacion ---------- */
 header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
     background: var(--color-principal);
     color: #fff;
     padding: 0.75rem 1rem;
 }
-header h1 { margin: 0 0 0.5rem; font-size: 1.4rem; }
+header h1 { margin: 0; font-size: 1.4rem; }
 nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
 nav a {
     display: block;
@@ -101,3 +106,10 @@ dl dd { margin: 0; }
 
 /* ---------- Pie ---------- */
 footer { text-align: center; padding: 1rem; border-top: 1px solid var(--color-borde); color: #555; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+    header { flex-direction: column; align-items: flex-start; }
+    nav ul { flex-direction: column; width: 100%; }
+    main { padding: 0.75rem; }
+}

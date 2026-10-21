@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Alta, consulta, modificacion y baja de socios del gimnasio">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/socios.js" defer></script>
+    <title>Gimnasio de Barrio - Socios</title>
+</head>
+<body>
+    <header>
+        <h1>Gimnasio de Barrio</h1>
+        <nav aria-label="Navegacion principal">
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="socios.html" aria-current="page">Socios</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="compra.html">Comprar</a></li>
+                <li><a href="acerca.html">Acerca de</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Socios</h2>
+        <p id="mensaje" class="mensaje" role="status"></p>
+
+        <!-- ALTA: POST /api/socios -->
+        <section aria-labelledby="titulo-alta">
+            <h3 id="titulo-alta">Alta de socio</h3>
+            <form id="form-alta" method="post" action="/api/socios" data-ok="Socio creado. PIN asignado: {pin}">
+                <fieldset>
+                    <legend>Datos del socio</legend>
+
+                    <label for="alta-dni">DNI</label>
+                    <input id="alta-dni" name="dni" type="text" required maxlength="20">
+
+                    <label for="alta-nombre">Nombre</label>
+                    <input id="alta-nombre" name="nombre" type="text" required maxlength="100">
+
+                    <label for="alta-apellido">Apellido</label>
+                    <input id="alta-apellido" name="apellido" type="text" required maxlength="100">
+
+                    <label for="alta-email">Email</label>
+                    <input id="alta-email" name="email" type="email" required maxlength="150">
+
+                    <label for="alta-telefono">Telefono</label>
+                    <input id="alta-telefono" name="telefono" type="tel" maxlength="30">
+
+                    <label for="alta-membresia">Membresia</label>
+                    <select id="alta-membresia" name="membresia" required>
+                        <option value="MENSUAL">Mensual</option>
+                        <option value="TRIMESTRAL">Trimestral</option>
+                        <option value="ANUAL">Anual</option>
+                    </select>
+
+                    <label for="alta-medioPago">Medio de pago</label>
+                    <select id="alta-medioPago" name="medioPago" required>
+                        <option value="EFECTIVO">Efectivo</option>
+                        <option value="TRANSFERENCIA">Transferencia</option>
+                    </select>
+                </fieldset>
+                <button type="submit">Dar de alta</button>
+            </form>
+        </section>
+
+        <!-- LISTADO: GET /api/socios -->
+        <section aria-labelledby="titulo-listado">
+            <h3 id="titulo-listado">Listado de socios</h3>
+            <p><button type="button" id="boton-recargar" class="secundario" data-url="/api/socios">Actualizar listado</button></p>
+            <div class="contenedor-tabla">
+                <table>
+                    <caption>Socios registrados</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">DNI</th>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Apellido</th>
+                            <th scope="col">Membresia</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-socios" data-vacio="No hay socios cargados."></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- DETALLE: GET /api/socios/{id} -->
+    <dialog id="dialogo-detalle" aria-labelledby="titulo-detalle">
+        <h3 id="titulo-detalle">Detalle del socio</h3>
+        <dl id="datos-detalle">
+            <dt>ID</dt><dd data-campo="id"></dd>
+            <dt>DNI</dt><dd data-campo="dni"></dd>
+            <dt>PIN</dt><dd data-campo="pin"></dd>
+            <dt>Nombre</dt><dd data-campo="nombre"></dd>
+            <dt>Apellido</dt><dd data-campo="apellido"></dd>
+            <dt>Email</dt><dd data-campo="email"></dd>
+            <dt>Telefono</dt><dd data-campo="telefono"></dd>
+            <dt>Membresia</dt><dd data-campo="membresia"></dd>
+            <dt>Medio de pago</dt><dd data-campo="medioPago"></dd>
+            <dt>Deuda</dt><dd data-campo="deuda"></dd>
+            <dt>Estado</dt><dd data-campo="activo"></dd>
+            <dt>Fecha de alta</dt><dd data-campo="fechaAlta"></dd>
+        </dl>
+        <form method="dialog"><button type="submit" class="secundario">Cerrar</button></form>
+    </dialog>
+
+    <!-- MODIFICACION: PUT /api/socios/{id} -->
+    <dialog id="dialogo-editar" aria-labelledby="titulo-editar">
+        <h3 id="titulo-editar">Editar socio</h3>
+        <form id="form-editar" method="post" data-metodo="PUT" action="/api/socios/{id}" data-ok="Socio actualizado.">
+            <label for="editar-nombre">Nombre</label>
+            <input id="editar-nombre" name="nombre" type="text" required maxlength="100">
+
+            <label for="editar-apellido">Apellido</label>
+            <input id="editar-apellido" name="apellido" type="text" required maxlength="100">
+
+            <label for="editar-email">Email</label>
+            <input id="editar-email" name="email" type="email" required maxlength="150">
+
+            <label for="editar-telefono">Telefono</label>
+            <input id="editar-telefono" name="telefono" type="tel" maxlength="30">
+
+            <label for="editar-membresia">Membresia</label>
+            <select id="editar-membresia" name="membresia" required>
+                <option value="MENSUAL">Mensual</option>
+                <option value="TRIMESTRAL">Trimestral</option>
+                <option value="ANUAL">Anual</option>
+            </select>
+
+            <label for="editar-medioPago">Medio de pago</label>
+            <select id="editar-medioPago" name="medioPago" required>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia</option>
+            </select>
+
+            <div class="botonera">
+                <button type="submit">Guardar cambios</button>
+                <button type="button" id="cancelar-editar" class="secundario">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <!-- Fila modelo. Cada formulario declara el metodo HTTP, la URL y los mensajes. -->
+    <template id="fila-socio">
+        <tr>
+            <td data-campo="id"></td>
+            <td data-campo="dni"></td>
+            <td data-campo="nombre"></td>
+            <td data-campo="apellido"></td>
+            <td data-campo="membresia"></td>
+            <td data-campo="estado"></td>
+            <td class="acciones">
+                <button type="button" class="secundario" data-accion="detalle" data-url="/api/socios/{id}">Ver</button>
+                <button type="button" class="secundario" data-accion="editar">Editar</button>
+
+                <!-- PUT /api/socios/{id}/pin -->
+                <form method="post" data-metodo="PUT" data-accion="pin" action="/api/socios/{id}/pin"
+                      data-ok="Nuevo PIN de {nombre}: {pin}">
+                    <button type="submit" class="secundario">Nuevo PIN</button>
+                </form>
+
+                <!-- DELETE /api/socios/{id} (baja logica) -->
+                <form method="post" data-metodo="DELETE" data-accion="baja" action="/api/socios/{id}"
+                      data-confirmar="Dar de baja a este socio?" data-ok="Socio dado de baja.">
+                    <button type="submit" class="peligro">Baja</button>
+                </form>
+            </td>
+        </tr>
+    </template>
+
+    <footer>
+        <p>Aplicaciones Interactivas - UADE - 2do Cuatrimestre 2026</p>
+    </footer>
+</body>
+</html>
