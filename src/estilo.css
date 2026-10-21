@@ -1,0 +1,103 @@
+/* Estilos simples. Sin fuentes ni recursos externos: solo fuentes del sistema. */
+:root {
+    --color-principal: #1b5e20;
+    --color-oscuro: #14391a;
+    --color-claro: #f1f5f1;
+    --color-borde: #c8d3c8;
+    --color-error: #b71c1c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+    color: #222;
+    background: #fff;
+}
+
+a { color: var(--color-principal); }
+
+/* ---------- Encabezado y navegacion ---------- */
+header {
+    background: var(--color-principal);
+    color: #fff;
+    padding: 0.75rem 1rem;
+}
+header h1 { margin: 0 0 0.5rem; font-size: 1.4rem; }
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+nav a {
+    display: block;
+    padding: 0.35rem 0.8rem;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 4px;
+}
+nav a:hover, nav a[aria-current="page"] { background: var(--color-oscuro); }
+
+/* ---------- Contenido ---------- */
+main { max-width: 64rem; margin: 0 auto; padding: 1rem; }
+section { margin-bottom: 2rem; }
+h2 { color: var(--color-oscuro); border-bottom: 2px solid var(--color-borde); padding-bottom: 0.25rem; }
+
+.portada { background: var(--color-claro); padding: 2rem 1rem; text-align: center; border-radius: 6px; }
+.portada h2 { border: 0; font-size: 1.8rem; }
+
+.tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+.tarjetas article { border: 1px solid var(--color-borde); border-radius: 6px; padding: 1rem; }
+.tarjetas h3 { margin-top: 0; }
+
+/* ---------- Tablas ---------- */
+.contenedor-tabla { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+caption { text-align: left; font-weight: bold; padding: 0.4rem 0; }
+th, td { border: 1px solid var(--color-borde); padding: 0.4rem 0.6rem; text-align: left; }
+thead th { background: var(--color-claro); }
+td.acciones { white-space: nowrap; }
+td.acciones form { display: inline; }
+
+/* ---------- Formularios ---------- */
+fieldset { border: 1px solid var(--color-borde); border-radius: 6px; margin: 0 0 1rem; padding: 0.75rem 1rem; }
+legend { font-weight: bold; padding: 0 0.4rem; }
+label { display: block; margin-top: 0.6rem; font-weight: bold; }
+input, select {
+    display: block;
+    width: 100%;
+    max-width: 24rem;
+    padding: 0.4rem;
+    font: inherit;
+    border: 1px solid #888;
+    border-radius: 4px;
+}
+input[type="radio"] { display: inline; width: auto; }
+label.opcion { display: inline-block; font-weight: normal; margin-right: 1rem; }
+
+button {
+    font: inherit;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--color-principal);
+    background: var(--color-principal);
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover { background: var(--color-oscuro); }
+button.secundario { background: #fff; color: var(--color-principal); }
+button.peligro { background: var(--color-error); border-color: var(--color-error); }
+.botonera { margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ---------- Mensajes y dialogos ---------- */
+.mensaje { padding: 0.6rem 0.8rem; border-radius: 4px; border: 1px solid var(--color-borde); background: var(--color-claro); }
+.mensaje:empty { display: none; }
+.mensaje.error { color: var(--color-error); border-color: var(--color-error); background: #fdecea; }
+
+dialog { border: 1px solid #888; border-radius: 6px; padding: 1rem 1.5rem; max-width: 30rem; width: 92%; }
+dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+dl dt { font-weight: bold; margin-top: 0.5rem; }
+dl dd { margin: 0; }
+
+.oculto { display: none; }
+
+/* ---------- Pie ---------- */
+footer { text-align: center; padding: 1rem; border-top: 1px solid var(--color-borde); color: #555; }
