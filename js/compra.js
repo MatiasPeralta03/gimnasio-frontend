@@ -107,12 +107,28 @@ formPago.addEventListener("submit", (e) => {
 document.getElementById("volver-1").addEventListener("click", () => irAlPaso(1));
 document.getElementById("volver-2").addEventListener("click", () => irAlPaso(2));
 
-// PASO 3: confirmacion simulada (no se envia nada al servidor)
-const botonConfirmar = document.getElementById("confirmar");
-botonConfirmar.addEventListener("click", () => {
-    const total = document.getElementById("total").textContent;
-    document.getElementById("texto-final").textContent = plantilla(botonConfirmar.dataset.ok, { total });
-    irAlPaso(4);
+// PASO 3: confirmar. Registra una venta por producto (POST segun declara el form en el HTML);
+// el backend descuenta el stock de cada una.
+const formVenta = document.getElementById("form-venta");
+formVenta.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const socioId = Number(selectSocio.value);
+    const pagada = formPago.elements["pago"].value !== "DEUDA";
+    try {
+        for (const { producto, cantidad } of items) {
+            await pedir(formVenta.getAttribute("action"), {
+                method: metodoDe(formVenta),
+                headers: { Accept: "application/json", "Content-Type": "application/json" },
+                body: JSON.stringify({ socioId, productoId: producto.id, cantidad, pagada }),
+            });
+        }
+        const total = document.getElementById("total").textContent;
+        document.getElementById("texto-final").textContent = plantilla(formVenta.dataset.ok, { total });
+        irAlPaso(4);
+    } catch (err) {
+        mostrarMensaje(mensaje, err.message, true);
+        cargarProductos(); // refresca el stock por si cambio
+    }
 });
 
 cargarProductos();

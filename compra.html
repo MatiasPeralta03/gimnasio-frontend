@@ -25,7 +25,7 @@
 
     <main>
         <h2>Comprar en el kiosco</h2>
-        <p>Simulacion del proceso de compra: no se registra ninguna venta en el servidor.</p>
+        <p>Proceso de compra del kiosco: al confirmar se registra la venta y se descuenta el stock.</p>
         <p id="mensaje" class="mensaje" role="status"></p>
 
         <!-- PASO 1: elegir productos. GET /api/productos -->
@@ -102,10 +102,14 @@
                 </table>
             </div>
             <p id="resumen-datos"></p>
-            <div class="botonera">
-                <button type="button" id="volver-2" class="secundario">Volver</button>
-                <button type="button" id="confirmar" data-ok="Gracias! Tu compra por {total} fue registrada (simulacion).">Confirmar compra</button>
-            </div>
+            <!-- POST /api/ventas: se registra una venta por cada producto y el backend descuenta el stock -->
+            <form id="form-venta" method="post" action="/api/ventas"
+                  data-ok="Gracias! Tu compra por {total} fue registrada.">
+                <div class="botonera">
+                    <button type="button" id="volver-2" class="secundario">Volver</button>
+                    <button type="submit">Confirmar compra</button>
+                </div>
+            </form>
         </section>
 
         <!-- FIN -->
