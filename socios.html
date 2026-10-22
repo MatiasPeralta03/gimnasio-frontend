@@ -69,6 +69,14 @@
         <!-- LISTADO: GET /api/socios -->
         <section aria-labelledby="titulo-listado">
             <h3 id="titulo-listado">Listado de socios</h3>
+            <form id="form-filtro" method="get" action="/api/socios">
+                <label for="filtro-estado">Mostrar socios</label>
+                <select id="filtro-estado" name="estado">
+                    <option value="todos">Todos</option>
+                    <option value="activos">Dados de alta (activos)</option>
+                    <option value="bajas">Dados de baja</option>
+                </select>
+            </form>
             <p><button type="button" id="boton-recargar" class="secundario" data-url="/api/socios">Actualizar listado</button></p>
             <div class="contenedor-tabla">
                 <table>
@@ -81,10 +89,11 @@
                             <th scope="col">Apellido</th>
                             <th scope="col">Membresia</th>
                             <th scope="col">Estado</th>
+                            <th scope="col">Deuda</th>
                             <th scope="col">Acciones</th>
                         </tr>
                     </thead>
-                    <tbody id="tabla-socios" data-vacio="No hay socios cargados."></tbody>
+                    <tbody id="tabla-socios" data-vacio="No hay socios que coincidan con el filtro."></tbody>
                 </table>
             </div>
         </section>
@@ -146,6 +155,31 @@
         </form>
     </dialog>
 
+    <!-- PAGO DE DEUDA: POST /api/pagos -->
+    <dialog id="dialogo-pagar" aria-labelledby="titulo-pagar">
+        <h3 id="titulo-pagar">Pagar deuda</h3>
+        <p id="texto-pagar" data-texto="Socio: {nombre} {apellido} | Deuda actual: {deuda}"></p>
+        <form id="form-pagar" method="post" action="/api/pagos"
+              data-ok="Pago registrado. Deuda restante: {deudaRestante}">
+            <input type="hidden" id="pagar-socioId" name="socioId">
+            <input type="hidden" name="concepto" value="DEUDA">
+
+            <label for="pagar-monto">Monto a pagar</label>
+            <input id="pagar-monto" name="monto" type="number" min="0.01" step="0.01" required>
+
+            <label for="pagar-medioPago">Medio de pago</label>
+            <select id="pagar-medioPago" name="medioPago" required>
+                <option value="EFECTIVO">Efectivo</option>
+                <option value="TRANSFERENCIA">Transferencia</option>
+            </select>
+
+            <div class="botonera">
+                <button type="submit">Registrar pago</button>
+                <button type="button" id="cancelar-pagar" class="secundario">Cancelar</button>
+            </div>
+        </form>
+    </dialog>
+
     <!-- Fila modelo. Cada formulario declara el metodo HTTP, la URL y los mensajes. -->
     <template id="fila-socio">
         <tr>
@@ -155,9 +189,11 @@
             <td data-campo="apellido"></td>
             <td data-campo="membresia"></td>
             <td data-campo="estado"></td>
+            <td data-campo="deuda"></td>
             <td class="acciones">
                 <button type="button" class="secundario" data-accion="detalle" data-url="/api/socios/{id}">Ver</button>
                 <button type="button" class="secundario" data-accion="editar">Editar</button>
+                <button type="button" class="secundario" data-accion="pagar">Pagar deuda</button>
 
                 <!-- PUT /api/socios/{id}/pin -->
                 <form method="post" data-metodo="PUT" data-accion="pin" action="/api/socios/{id}/pin"

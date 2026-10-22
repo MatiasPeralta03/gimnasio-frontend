@@ -14,22 +14,37 @@ const botonRecargar = document.getElementById("boton-recargar");
 // El action de edicion trae {id}: guardamos el modelo para reusarlo.
 const actionEditarModelo = formEditar.getAttribute("action");
 
+const filtroEstado = document.getElementById("filtro-estado");
+let sociosCargados = [];
+
 async function cargarSocios() {
     try {
-        const socios = await obtener(botonRecargar.dataset.url);
-        tabla.replaceChildren();
-        if (socios.length === 0) {
-            const fila = document.createElement("tr");
-            const td = celda(tabla.dataset.vacio);
-            td.colSpan = 7;
-            fila.append(td);
-            tabla.append(fila);
-        }
-        socios.forEach((socio) => tabla.append(crearFila(socio)));
+        sociosCargados = await obtener(botonRecargar.dataset.url);
+        mostrarSocios();
     } catch (e) {
         mostrarMensaje(mensaje, e.message, true);
     }
 }
+
+/** Dibuja la tabla segun el filtro elegido (todos / activos / bajas). */
+function mostrarSocios() {
+    const filtro = filtroEstado.value;
+    const socios = sociosCargados.filter(
+        (s) => filtro === "todos" || (filtro === "activos" ? s.activo : !s.activo)
+    );
+    tabla.replaceChildren();
+    if (socios.length === 0) {
+        const fila = document.createElement("tr");
+        const td = celda(tabla.dataset.vacio);
+        td.colSpan = 8;
+        fila.append(td);
+        tabla.append(fila);
+    }
+    socios.forEach((socio) => tabla.append(crearFila(socio)));
+}
+
+filtroEstado.addEventListener("change", mostrarSocios);
+document.getElementById("form-filtro").addEventListener("submit", (e) => e.preventDefault());
 
 function crearFila(socio) {
     const fila = filaModelo.content.firstElementChild.cloneNode(true);
@@ -39,6 +54,16 @@ function crearFila(socio) {
     fila.querySelector('[data-campo="apellido"]').textContent = socio.apellido;
     fila.querySelector('[data-campo="membresia"]').textContent = socio.membresia;
     fila.querySelector('[data-campo="estado"]').textContent = socio.activo ? "Activo" : "Baja";
+
+    fila.querySelector('[data-campo="deuda"]').textContent = formatoPrecio(socio.deuda);
+
+    // "Pagar deuda" solo aparece si el socio debe algo.
+    const botonPagar = fila.querySelector('[data-accion="pagar"]');
+    if (socio.deuda > 0) {
+        botonPagar.addEventListener("click", () => abrirPago(socio));
+    } else {
+        botonPagar.remove();
+    }
 
     fila.querySelectorAll("form").forEach((form) => asignarId(form, socio.id));
 
@@ -101,5 +126,33 @@ formEditar.addEventListener("submit", (e) => {
 });
 
 document.getElementById("cancelar-editar").addEventListener("click", () => dialogoEditar.close());
+
+// PAGO DE DEUDA (POST /api/pagos, segun declara el form en el HTML)
+const dialogoPagar = document.getElementById("dialogo-pagar");
+const formPagar = document.getElementById("form-pagar");
+
+function abrirPago(socio) {
+    formPagar.reset();
+    document.getElementById("pagar-socioId").value = socio.id;
+    document.getElementById("pagar-monto").max = socio.deuda;
+    document.getElementById("pagar-monto").value = socio.deuda;
+    const texto = document.getElementById("texto-pagar");
+    texto.textContent = plantilla(texto.dataset.texto, {
+        nombre: socio.nombre,
+        apellido: socio.apellido,
+        deuda: formatoPrecio(socio.deuda),
+    });
+    dialogoPagar.showModal();
+}
+
+formPagar.addEventListener("submit", (e) => {
+    e.preventDefault();
+    enviarFormulario(formPagar, mensaje, () => {
+        dialogoPagar.close();
+        cargarSocios();
+    });
+});
+
+document.getElementById("cancelar-pagar").addEventListener("click", () => dialogoPagar.close());
 botonRecargar.addEventListener("click", cargarSocios);
 cargarSocios();
