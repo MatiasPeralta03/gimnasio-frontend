@@ -170,6 +170,12 @@
                       data-confirmar="Dar de baja a este socio?" data-ok="Socio dado de baja.">
                     <button type="submit" class="peligro">Baja</button>
                 </form>
+
+                <!-- PUT /api/socios/{id}/reactivar (vuelve a dar de alta a un socio dado de baja) -->
+                <form method="post" data-metodo="PUT" data-accion="alta" action="/api/socios/{id}/reactivar"
+                      data-confirmar="Volver a dar de alta a este socio?" data-ok="Socio {nombre} dado de alta nuevamente.">
+                    <button type="submit">Dar de alta</button>
+                </form>
             </td>
         </tr>
     </template>

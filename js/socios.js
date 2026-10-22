@@ -48,11 +48,15 @@ function crearFila(socio) {
 
     fila.querySelector('[data-accion="editar"]').addEventListener("click", () => abrirEdicion(socio));
 
-    for (const accion of ["pin", "baja"]) {
+    // Un socio activo se puede dar de baja; uno dado de baja se puede volver a dar de alta.
+    fila.querySelector('[data-accion="' + (socio.activo ? "alta" : "baja") + '"]').remove();
+
+    for (const accion of ["pin", "baja", "alta"]) {
         const form = fila.querySelector('[data-accion="' + accion + '"]');
+        if (!form) continue;
         form.addEventListener("submit", (e) => {
             e.preventDefault();
-            enviarFormulario(form, mensaje, accion === "baja" ? cargarSocios : null);
+            enviarFormulario(form, mensaje, accion === "pin" ? null : cargarSocios);
         });
     }
     return fila;
