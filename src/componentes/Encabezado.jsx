@@ -4,11 +4,10 @@ import { Link, NavLink } from "react-router-dom";
 const ENLACES = [
   ["/", "Inicio"],
   ["/socios", "Socios"],
+  ["/empleados", "Empleados"],
   ["/clases", "Clases"],
-  ["/ingresos", "Ingresos"],
   ["/productos", "Productos"],
   ["/compra", "Comprar"],
-  ["/empleados", "Empleados"],
   ["/acerca", "Acerca de"],
 ];
 
@@ -29,9 +28,9 @@ export default function Encabezado() {
           aria-controls="menu-principal"
           onClick={() => setAbierto(!abierto)}
         >
-          {abierto ? "Cerrar menu" : "Menu"}
+          {abierto ? "Cerrar menú" : "Menú"}
         </button>
-        <nav id="menu-principal" className="menu" aria-label="Navegacion principal" hidden={!abierto}>
+        <nav id="menu-principal" className="menu" aria-label="Navegación principal" hidden={!abierto}>
           <ul>
             {ENLACES.map(([ruta, texto]) => (
               <li key={ruta}>

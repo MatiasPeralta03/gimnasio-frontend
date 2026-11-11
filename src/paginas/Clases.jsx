@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { enviar, datosDe } from "../js/api.js";
 import { filtrarClases, listarClases, listarInstructores } from "../js/clases.js";
-import { formatoFechaHora, paraBackend, paraInputFechaHora } from "../js/formatos.js";
+import { ahoraParaInput, formatoFechaHora, paraBackend, paraInputFechaHora } from "../js/formatos.js";
 import { validarFormulario } from "../js/validaciones.js";
 import useDatos from "../hooks/useDatos.js";
 import useMensaje from "../hooks/useMensaje.js";
@@ -15,6 +15,10 @@ import Tabla from "../componentes/Tabla.jsx";
 
 /** Campos de la clase (alta y edicion). */
 function CamposClase({ prefijo, clase = {}, instructores }) {
+  const esAlta = clase.id === undefined;
+  // Al editar, la capacidad no puede quedar por debajo de los socios ya inscriptos.
+  const inscriptos = esAlta ? 0 : clase.capacidad - clase.cuposDisponibles;
+
   return (
     <div className="campos">
       <Campo
@@ -26,28 +30,29 @@ function CamposClase({ prefijo, clase = {}, instructores }) {
         maxLength={100}
         defaultValue={clase.actividad}
         ayuda="Ejemplo: Funcional, Spinning, Yoga."
-        data-mensaje-error="Escribi el nombre de la actividad (al menos 3 letras)."
+        data-mensaje-error="Escribí el nombre de la actividad (al menos 3 letras)."
       />
       <Campo
         id={prefijo + "-horario"}
-        etiqueta="Dia y horario"
+        etiqueta="Día y horario"
         name="horario"
         type="datetime-local"
         required
+        min={esAlta ? ahoraParaInput() : undefined}
         defaultValue={paraInputFechaHora(clase.horario)}
-        data-mensaje-error="Elegi el dia y la hora de la clase."
+        data-mensaje-error={esAlta ? "Elegí un día y una hora futuros." : "Elegí el día y la hora de la clase."}
       />
       <Campo
         id={prefijo + "-capacidad"}
         etiqueta="Capacidad (lugares)"
         name="capacidad"
         type="number"
-        min="1"
+        min={Math.max(1, inscriptos)}
         max="200"
         step="1"
         required
         defaultValue={clase.capacidad}
-        data-mensaje-error="La capacidad debe ser un numero entero entre 1 y 200."
+        data-mensaje-error={"La capacidad debe ser un número entero entre " + Math.max(1, inscriptos) + " y 200."}
       />
       <Campo
         id={prefijo + "-instructor"}
@@ -56,9 +61,9 @@ function CamposClase({ prefijo, clase = {}, instructores }) {
         name="instructorId"
         required
         defaultValue={clase.instructorId ?? ""}
-        data-mensaje-error="Elegi un instructor."
+        data-mensaje-error="Elegí un instructor."
       >
-        <option value="">Elegi un instructor...</option>
+        <option value="">Elegí un instructor...</option>
         {instructores.map((e) => (
           <option key={e.id} value={e.id}>
             {e.apellido}, {e.nombre}
@@ -69,12 +74,12 @@ function CamposClase({ prefijo, clase = {}, instructores }) {
   );
 }
 
-/** Pantalla de clases: agenda, alta, edicion, cancelacion e inscripciones. */
+/** Pantalla de clases: alta, agenda con cupos, edicion, cancelacion e inscripciones. */
 export default function Clases() {
   useTitulo("Clases");
   const { datos: clases, cargando, error, recargar } = useDatos(listarClases);
   const { datos: instructores } = useDatos(listarInstructores);
-  const { mensaje, ejecutar } = useMensaje();
+  const { mensaje, limpiar, ejecutar } = useMensaje();
   const [filtro, setFiltro] = useState({ texto: "", estado: "activas", soloConCupo: false });
   const [editando, setEditando] = useState(null);
   const [inscriptos, setInscriptos] = useState(null);
@@ -83,6 +88,12 @@ export default function Clases() {
 
   // El campo datetime-local da "2026-10-05T18:00"; el backend espera segundos.
   const datosClase = (form) => ({ ...datosDe(form), horario: paraBackend(form.elements["horario"].value) });
+
+  // Al abrir la ventana se limpia el mensaje anterior: ahi adentro solo se ve lo que pase en ella.
+  function abrirEdicion(clase) {
+    limpiar();
+    setEditando(clase);
+  }
 
   function alta(e) {
     e.preventDefault();
@@ -106,7 +117,7 @@ export default function Clases() {
 
   function cancelar(e, clase) {
     e.preventDefault();
-    if (!window.confirm("Cancelar la clase " + clase.actividad + "? Los socios inscriptos dejaran de tener lugar.")) return;
+    if (!window.confirm("¿Cancelar la clase " + clase.actividad + "? Los socios inscriptos dejarán de tener lugar.")) return;
     ejecutar(() => enviar(e.currentTarget), "Clase cancelada.", recargar);
   }
 
@@ -127,7 +138,7 @@ export default function Clases() {
         </form>
       </section>
 
-      <section aria-labelledby="titulo-listado">
+      <section className="panel" aria-labelledby="titulo-listado">
         <h2 id="titulo-listado">Agenda de clases</h2>
 
         <form className="busqueda" role="search" aria-label="Filtrar clases" onSubmit={(e) => e.preventDefault()}>
@@ -176,7 +187,9 @@ export default function Clases() {
                 <td data-label="Horario">{formatoFechaHora(c.horario)}</td>
                 <td data-label="Instructor">{c.instructorNombre}</td>
                 <td data-label="Cupos">
-                  {c.cuposDisponibles} / {c.capacidad} libres
+                  <span className={"etiqueta" + (c.cuposDisponibles > 0 ? "" : " baja")}>
+                    {c.cuposDisponibles > 0 ? c.cuposDisponibles + " de " + c.capacidad + " libres" : "Sin cupo"}
+                  </span>
                 </td>
                 <td data-label="Estado">
                   <span className={"etiqueta" + (c.activa ? "" : " baja")}>{c.activa ? "Activa" : "Cancelada"}</span>
@@ -187,7 +200,7 @@ export default function Clases() {
                   </button>
                   {c.activa && (
                     <>
-                      <button type="button" className="secundario" onClick={() => setEditando(c)}>
+                      <button type="button" className="secundario" onClick={() => abrirEdicion(c)}>
                         Editar<span className="solo-lectores"> {c.actividad}</span>
                       </button>
                       {/* DELETE /api/clases/{id} */}
@@ -209,6 +222,7 @@ export default function Clases() {
       <Dialogo abierto={editando !== null} onCerrar={() => setEditando(null)} titulo="Editar clase">
         {editando && (
           <form key={editando.id} method="post" data-metodo="PUT" action={"/api/clases/" + editando.id} onSubmit={modificar} noValidate>
+            <Mensaje mensaje={mensaje} />
             <CamposClase prefijo="editar" clase={editando} instructores={instructores} />
             <div className="botonera">
               <button type="submit">Guardar cambios</button>

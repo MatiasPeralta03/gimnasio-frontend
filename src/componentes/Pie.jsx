@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom";
 
-/** Pie de pagina con el acceso a la politica de privacidad (visible en todas las pantallas). */
+/** Pie de pagina con el acceso a las politicas (visible en todas las pantallas). */
 export default function Pie() {
   return (
     <footer className="pie">
       <ul>
         <li>
-          <Link to="/privacidad">Politica de privacidad: que hacemos con tus datos</Link>
+          <Link to="/politicas">Políticas de seguridad y privacidad</Link>
         </li>
         <li>
           <Link to="/acerca">Acerca de</Link>

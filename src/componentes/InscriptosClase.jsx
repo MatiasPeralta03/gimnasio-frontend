@@ -6,7 +6,8 @@ import Tabla from "./Tabla.jsx";
 import useDatos from "../hooks/useDatos.js";
 import useMensaje from "../hooks/useMensaje.js";
 import { enviar } from "../js/api.js";
-import { cuposDeClase, listarClases, listarInscriptos, listarSociosActivos } from "../js/clases.js";
+import { cuposDeClase, listarClases, listarInscriptos } from "../js/clases.js";
+import { listarSociosActivos } from "../js/socios.js";
 import { formatoFechaHora } from "../js/formatos.js";
 import { validarFormulario } from "../js/validaciones.js";
 
@@ -36,8 +37,8 @@ export default function InscriptosClase({ clase, alCambiar }) {
 
   function cancelar(e, inscripcion) {
     e.preventDefault();
-    if (!window.confirm("Cancelar la inscripcion de " + inscripcion.socioNombre + "?")) return;
-    ejecutar(() => enviar(e.currentTarget), "Inscripcion cancelada.", refrescar);
+    if (!window.confirm("¿Cancelar la inscripción de " + inscripcion.socioNombre + "?")) return;
+    ejecutar(() => enviar(e.currentTarget), "Inscripción cancelada.", refrescar);
   }
 
   return (
@@ -56,9 +57,9 @@ export default function InscriptosClase({ clase, alCambiar }) {
           as="select"
           name="socioId"
           required
-          data-mensaje-error="Elegi un socio de la lista."
+          data-mensaje-error="Elegí un socio de la lista."
         >
-          <option value="">Elegi un socio...</option>
+          <option value="">Elegí un socio...</option>
           {socios.datos.map((s) => (
             <option key={s.id} value={s.id}>
               {s.apellido}, {s.nombre} (DNI {s.dni})
@@ -77,7 +78,7 @@ export default function InscriptosClase({ clase, alCambiar }) {
         error={inscriptos.error}
         recargar={inscriptos.recargar}
         vacio={inscriptos.datos.length === 0}
-        textoVacio="Todavia no hay inscriptos."
+        textoVacio="Todavía no hay inscriptos."
       >
         <Tabla titulo="Socios inscriptos" columnas={["Socio", "Inscripto el", "Acciones"]}>
           {inscriptos.datos.map((i) => (
@@ -88,7 +89,7 @@ export default function InscriptosClase({ clase, alCambiar }) {
                 {/* DELETE /api/inscripciones/{id} */}
                 <form method="post" data-metodo="DELETE" action={"/api/inscripciones/" + i.id} onSubmit={(e) => cancelar(e, i)}>
                   <button type="submit" className="peligro">
-                    Cancelar<span className="solo-lectores"> inscripcion de {i.socioNombre}</span>
+                    Cancelar<span className="solo-lectores"> inscripción de {i.socioNombre}</span>
                   </button>
                 </form>
               </td>

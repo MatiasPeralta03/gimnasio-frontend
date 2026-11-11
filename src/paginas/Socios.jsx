@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { enviar } from "../js/api.js";
 import { formatoPrecio } from "../js/formatos.js";
-import { nombreDeMembresia, precioDeMembresia } from "../js/membresias.js";
+import { nombreDeMembresia } from "../js/membresias.js";
 import {
   datosDetalleSocio,
   estadoDeSocio,
@@ -21,9 +22,7 @@ import Detalle from "../componentes/Detalle.jsx";
 import Dialogo from "../componentes/Dialogo.jsx";
 import Estado from "../componentes/Estado.jsx";
 import FormPago from "../componentes/FormPago.jsx";
-import HistorialSocio from "../componentes/HistorialSocio.jsx";
 import Mensaje from "../componentes/Mensaje.jsx";
-import { Link } from "react-router-dom";
 import Tabla from "../componentes/Tabla.jsx";
 
 /*
@@ -34,20 +33,30 @@ import Tabla from "../componentes/Tabla.jsx";
 export default function Socios() {
   useTitulo("Socios");
   const { datos: socios, cargando, error, recargar } = useDatos(listarSocios);
-  const { mensaje, avisarError, ejecutar } = useMensaje();
+  const { mensaje, avisarError, limpiar, ejecutar } = useMensaje();
   const [filtro, setFiltro] = useState({ texto: "", estado: "todos" });
   const [detalle, setDetalle] = useState(null);
   const [editando, setEditando] = useState(null);
-  const [cobro, setCobro] = useState(null); // { socio, concepto }
-  const [historial, setHistorial] = useState(null);
+  const [pagando, setPagando] = useState(null);
 
   const visibles = filtrarSocios(socios, filtro);
+
+  // Al abrir una ventana se limpia el mensaje anterior: ahi adentro solo se ve lo que pase en ella.
+  function abrirEdicion(socio) {
+    limpiar();
+    setEditando(socio);
+  }
+
+  function abrirPago(socio) {
+    limpiar();
+    setPagando(socio);
+  }
 
   function alta(e) {
     e.preventDefault();
     const form = e.currentTarget;
     if (!validarFormulario(form)) return;
-    ejecutar(() => enviar(form), (s) => "Socio creado. PIN asignado: " + s.pin, () => {
+    ejecutar(() => enviar(form), (s) => "Socio " + nombreCompleto(s) + " creado.", () => {
       form.reset();
       return recargar();
     });
@@ -68,9 +77,9 @@ export default function Socios() {
     ejecutar(() => enviar(e.currentTarget), textoExito, recargar);
   }
 
-  function cobrar(form) {
-    ejecutar(() => enviar(form), form.dataset.ok, () => {
-      setCobro(null);
+  function pagarDeuda(form) {
+    ejecutar(() => enviar(form), "Pago de deuda registrado.", () => {
+      setPagando(null);
       return recargar();
     });
   }
@@ -96,14 +105,18 @@ export default function Socios() {
             <legend>Datos del socio</legend>
             <CamposSocio prefijo="alta" conDni />
           </fieldset>
-          <Casilla id="alta-privacidad" required data-mensaje-error="Para registrarte tenes que aceptar la politica de privacidad.">
-            Acepto la <Link to="/privacidad">politica de privacidad</Link> (uso de mis datos).
+          <Casilla id="alta-politicas" required data-mensaje-error="Para registrar al socio, tiene que aceptar las políticas.">
+            El socio aceptó las{" "}
+            <Link to="/politicas" target="_blank">
+              políticas de seguridad y privacidad (se abre en otra pestaña)
+            </Link>
+            .
           </Casilla>
           <button type="submit">Dar de alta</button>
         </form>
       </section>
 
-      <section aria-labelledby="titulo-listado">
+      <section className="panel" aria-labelledby="titulo-listado">
         <h2 id="titulo-listado">Listado de socios</h2>
 
         {/* FILTROS: se aplican en el navegador sobre los socios ya cargados */}
@@ -126,11 +139,6 @@ export default function Socios() {
             <option value="activos">Dados de alta (activos)</option>
             <option value="bajas">Dados de baja</option>
           </Campo>
-          <div className="campo">
-            <button type="button" className="secundario" onClick={recargar}>
-              Actualizar listado
-            </button>
-          </div>
         </form>
 
         <p aria-live="polite" className="ayuda">
@@ -142,52 +150,33 @@ export default function Socios() {
           error={error}
           recargar={recargar}
           vacio={visibles.length === 0}
-          textoVacio="No hay socios que coincidan con la busqueda."
+          textoVacio="No hay socios que coincidan con la búsqueda."
         >
-          <Tabla titulo="Socios registrados" columnas={["ID", "DNI", "Nombre", "Membresia", "Estado", "Deuda", "Acciones"]}>
+          <Tabla titulo="Socios registrados" columnas={["DNI", "Nombre", "Membresía", "Estado", "Deuda", "Acciones"]}>
             {visibles.map((s) => (
               <tr key={s.id}>
-                <td data-label="ID">{s.id}</td>
                 <td data-label="DNI">{s.dni}</td>
                 <td data-label="Nombre">{nombreCompleto(s)}</td>
-                <td data-label="Membresia">{nombreDeMembresia(s.membresia)}</td>
+                <td data-label="Membresía">{nombreDeMembresia(s.membresia)}</td>
                 <td data-label="Estado">
                   <span className={"etiqueta" + (s.activo ? "" : " baja")}>{estadoDeSocio(s)}</span>
                 </td>
-                <td data-label="Deuda">{formatoPrecio(s.deuda)}</td>
+                <td data-label="Deuda">
+                  {s.deuda > 0 ? <span className="etiqueta alerta">{formatoPrecio(s.deuda)}</span> : formatoPrecio(s.deuda)}
+                </td>
                 <td className="acciones">
                   {/* DETALLE: GET /api/socios/{id} */}
                   <button type="button" className="secundario" onClick={() => verDetalle(s.id)}>
                     Ver<span className="solo-lectores"> {nombreCompleto(s)}</span>
                   </button>
-                  <button type="button" className="secundario" onClick={() => setHistorial(s)}>
-                    Historial<span className="solo-lectores"> de {nombreCompleto(s)}</span>
-                  </button>
-                  <button type="button" className="secundario" onClick={() => setEditando(s)}>
+                  <button type="button" className="secundario" onClick={() => abrirEdicion(s)}>
                     Editar<span className="solo-lectores"> {nombreCompleto(s)}</span>
                   </button>
-                  {s.activo && (
-                    <button type="button" className="secundario" onClick={() => setCobro({ socio: s, concepto: "CUOTA" })}>
-                      Cobrar cuota<span className="solo-lectores"> a {nombreCompleto(s)}</span>
-                    </button>
-                  )}
                   {s.deuda > 0 && (
-                    <button type="button" className="secundario" onClick={() => setCobro({ socio: s, concepto: "DEUDA" })}>
+                    <button type="button" className="secundario" onClick={() => abrirPago(s)}>
                       Pagar deuda<span className="solo-lectores"> de {nombreCompleto(s)}</span>
                     </button>
                   )}
-
-                  {/* PUT /api/socios/{id}/pin */}
-                  <form
-                    method="post"
-                    data-metodo="PUT"
-                    action={"/api/socios/" + s.id + "/pin"}
-                    onSubmit={(e) => accionDelSocio(e, (r) => "Nuevo PIN de " + r.nombre + ": " + r.pin)}
-                  >
-                    <button type="submit" className="secundario">
-                      Nuevo PIN<span className="solo-lectores"> de {nombreCompleto(s)}</span>
-                    </button>
-                  </form>
 
                   {s.activo ? (
                     /* DELETE /api/socios/{id} (baja logica) */
@@ -195,7 +184,7 @@ export default function Socios() {
                       method="post"
                       data-metodo="DELETE"
                       action={"/api/socios/" + s.id}
-                      onSubmit={(e) => accionDelSocio(e, "Socio dado de baja.", "Dar de baja a " + nombreCompleto(s) + "?")}
+                      onSubmit={(e) => accionDelSocio(e, "Socio dado de baja.", "¿Dar de baja a " + nombreCompleto(s) + "?")}
                     >
                       <button type="submit" className="peligro">
                         Baja<span className="solo-lectores"> de {nombreCompleto(s)}</span>
@@ -232,6 +221,7 @@ export default function Socios() {
       <Dialogo abierto={editando !== null} onCerrar={() => setEditando(null)} titulo="Editar socio">
         {editando && (
           <form key={editando.id} method="post" data-metodo="PUT" action={"/api/socios/" + editando.id} onSubmit={modificar} noValidate>
+            <Mensaje mensaje={mensaje} />
             <CamposSocio prefijo="editar" socio={editando} />
             <div className="botonera">
               <button type="submit">Guardar cambios</button>
@@ -243,41 +233,17 @@ export default function Socios() {
         )}
       </Dialogo>
 
-      {/* COBRO DE CUOTA / PAGO DE DEUDA: POST /api/pagos */}
-      <Dialogo
-        abierto={cobro !== null}
-        onCerrar={() => setCobro(null)}
-        titulo={cobro?.concepto === "DEUDA" ? "Pagar deuda" : "Cobrar cuota"}
-      >
-        {cobro && (
+      {/* PAGO DE DEUDA: POST /api/pagos */}
+      <Dialogo abierto={pagando !== null} onCerrar={() => setPagando(null)} titulo="Pagar deuda">
+        {pagando && (
           <>
+            <Mensaje mensaje={mensaje} />
             <p>
-              Socio: {nombreCompleto(cobro.socio)} |{" "}
-              {cobro.concepto === "DEUDA"
-                ? "Deuda actual: " + formatoPrecio(cobro.socio.deuda)
-                : "Membresia: " + nombreDeMembresia(cobro.socio.membresia)}
+              Socio: {nombreCompleto(pagando)} | Deuda actual: {formatoPrecio(pagando.deuda)}
             </p>
-            <FormPago
-              key={cobro.socio.id + cobro.concepto}
-              socio={cobro.socio}
-              concepto={cobro.concepto}
-              montoInicial={cobro.concepto === "DEUDA" ? cobro.socio.deuda : precioDeMembresia(cobro.socio.membresia)}
-              montoMaximo={cobro.concepto === "DEUDA" ? cobro.socio.deuda : undefined}
-              textoExito={cobro.concepto === "DEUDA" ? "Pago de deuda registrado." : "Cuota cobrada a " + nombreCompleto(cobro.socio) + "."}
-              onEnviar={cobrar}
-              onCancelar={() => setCobro(null)}
-            />
+            <FormPago key={pagando.id} socio={pagando} onEnviar={pagarDeuda} onCancelar={() => setPagando(null)} />
           </>
         )}
-      </Dialogo>
-
-      <Dialogo abierto={historial !== null} onCerrar={() => setHistorial(null)} titulo={historial ? "Historial de " + nombreCompleto(historial) : ""} grande>
-        {historial && <HistorialSocio socioId={historial.id} />}
-        <div className="botonera">
-          <button type="button" className="secundario" onClick={() => setHistorial(null)}>
-            Cerrar
-          </button>
-        </div>
       </Dialogo>
     </>
   );

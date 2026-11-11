@@ -4,7 +4,7 @@
  */
 export default function Mensaje({ mensaje }) {
   return (
-    <div aria-live="polite" aria-atomic="true">
+    <div className="zona-mensaje" aria-live="polite" aria-atomic="true">
       {mensaje.texto && <p className={"mensaje" + (mensaje.error ? " error" : "")}>{mensaje.texto}</p>}
     </div>
   );

@@ -25,7 +25,7 @@ function CamposProducto({ prefijo, producto = {} }) {
         minLength={2}
         maxLength={100}
         defaultValue={producto.nombre}
-        data-mensaje-error="Escribi el nombre del producto (al menos 2 letras)."
+        data-mensaje-error="Escribí el nombre del producto (al menos 2 letras)."
       />
       <Campo
         id={prefijo + "-precio"}
@@ -47,22 +47,28 @@ function CamposProducto({ prefijo, producto = {} }) {
         step="1"
         required
         defaultValue={producto.stock}
-        data-mensaje-error="El stock debe ser un numero entero, 0 o mayor."
+        data-mensaje-error="El stock debe ser un número entero, 0 o mayor."
       />
     </div>
   );
 }
 
-/** Pantalla de productos del kiosco: busqueda, filtro por stock, orden y ABM. */
+/** Pantalla de productos del kiosco: busqueda, filtro por stock, orden y CRUD. */
 export default function Productos() {
   useTitulo("Productos");
   const { datos: productos, cargando, error, recargar } = useDatos(listarProductos);
-  const { mensaje, avisarError, ejecutar } = useMensaje();
+  const { mensaje, avisarError, limpiar, ejecutar } = useMensaje();
   const [filtro, setFiltro] = useState({ texto: "", stock: "todos", orden: "nombre" });
   const [detalle, setDetalle] = useState(null);
   const [editando, setEditando] = useState(null);
 
   const visibles = filtrarProductos(productos, filtro);
+
+  // Al abrir la ventana se limpia el mensaje anterior: ahi adentro solo se ve lo que pase en ella.
+  function abrirEdicion(producto) {
+    limpiar();
+    setEditando(producto);
+  }
 
   function alta(e) {
     e.preventDefault();
@@ -85,7 +91,7 @@ export default function Productos() {
 
   function borrar(e, producto) {
     e.preventDefault();
-    if (!window.confirm("Borrar el producto " + producto.nombre + "?")) return;
+    if (!window.confirm("¿Borrar el producto " + producto.nombre + "?")) return;
     ejecutar(() => enviar(e.currentTarget), "Producto borrado.", recargar);
   }
 
@@ -114,8 +120,8 @@ export default function Productos() {
         </form>
       </section>
 
-      <section aria-labelledby="titulo-listado">
-        <h2 id="titulo-listado">Catalogo y stock</h2>
+      <section className="panel" aria-labelledby="titulo-listado">
+        <h2 id="titulo-listado">Catálogo y stock</h2>
 
         <form className="busqueda" role="search" aria-label="Buscar productos" onSubmit={(e) => e.preventDefault()}>
           <Campo
@@ -142,7 +148,7 @@ export default function Productos() {
           error={error}
           recargar={recargar}
           vacio={visibles.length === 0}
-          textoVacio="No hay productos que coincidan con la busqueda."
+          textoVacio="No hay productos que coincidan con la búsqueda."
         >
           <Tabla titulo="Productos disponibles" columnas={["ID", "Nombre", "Precio", "Stock", "Acciones"]}>
             {visibles.map((p) => (
@@ -151,14 +157,14 @@ export default function Productos() {
                 <td data-label="Nombre">{p.nombre}</td>
                 <td data-label="Precio">{formatoPrecio(p.precio)}</td>
                 <td data-label="Stock">
-                  {hayStock(p) ? p.stock : <span className="etiqueta baja">Agotado</span>}
+                  <span className={"etiqueta" + (hayStock(p) ? "" : " baja")}>{hayStock(p) ? p.stock + " unidades" : "Agotado"}</span>
                 </td>
                 <td className="acciones">
                   {/* DETALLE: GET /api/productos/{id} */}
                   <button type="button" className="secundario" onClick={() => verDetalle(p.id)}>
                     Ver<span className="solo-lectores"> {p.nombre}</span>
                   </button>
-                  <button type="button" className="secundario" onClick={() => setEditando(p)}>
+                  <button type="button" className="secundario" onClick={() => abrirEdicion(p)}>
                     Editar<span className="solo-lectores"> {p.nombre}</span>
                   </button>
                   {/* DELETE /api/productos/{id} */}
@@ -185,6 +191,7 @@ export default function Productos() {
       <Dialogo abierto={editando !== null} onCerrar={() => setEditando(null)} titulo="Editar producto">
         {editando && (
           <form key={editando.id} method="post" data-metodo="PUT" action={"/api/productos/" + editando.id} onSubmit={modificar} noValidate>
+            <Mensaje mensaje={mensaje} />
             <CamposProducto prefijo="editar" producto={editando} />
             <div className="botonera">
               <button type="submit">Guardar cambios</button>

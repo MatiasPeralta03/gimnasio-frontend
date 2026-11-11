@@ -10,12 +10,6 @@ export async function listarInstructores() {
   return empleados.filter((e) => e.activo);
 }
 
-/** Socios que se pueden inscribir: los activos. */
-export async function listarSociosActivos() {
-  const socios = await obtener("/api/socios");
-  return socios.filter((s) => s.activo);
-}
-
 /** Filtro por estado ("activas" | "canceladas" | "todas") y por cupo ("conCupo" = solo las que tienen lugar). */
 export function filtrarClases(clases, { estado, soloConCupo, texto }) {
   const buscado = texto.trim().toLowerCase();

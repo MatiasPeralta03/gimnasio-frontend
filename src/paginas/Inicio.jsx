@@ -7,10 +7,15 @@ import { formatoFechaHora, formatoPrecio, aFecha } from "../js/formatos.js";
 import { MEMBRESIAS } from "../js/membresias.js";
 
 const SERVICIOS = [
-  ["Sala de musculacion", "Maquinas y pesas libres con acceso rapido usando tu PIN personal."],
-  ["Clases grupales", "Funcional, spinning y mas, con cupos limitados y anotacion en recepcion."],
-  ["Kiosco", "Bebidas y snacks para antes o despues de entrenar, con tu cuenta de socio."],
+  ["Sala de musculación", "Máquinas y pesas libres para entrenar a tu ritmo."],
+  ["Clases grupales", "Funcional, spinning y más, con cupos limitados y anotación en recepción."],
+  ["Kiosco", "Bebidas y snacks para antes o después de entrenar, con tu cuenta de socio."],
 ];
+
+function textoCupos(cupos) {
+  if (cupos === 0) return "Sin cupo";
+  return cupos === 1 ? "1 lugar libre" : cupos + " lugares libres";
+}
 
 /** Pagina de inicio: presenta el gimnasio, los planes y las proximas clases. */
 export default function Inicio() {
@@ -26,19 +31,19 @@ export default function Inicio() {
     <>
       <section className="portada" aria-labelledby="titulo-portada">
         <h1 id="titulo-portada">Gimnasio de Barrio</h1>
-        <p>Entrena cerca de casa. Elegi tu plan, anotate a las clases y entra con tu PIN.</p>
-        <div className="botonera" style={{ justifyContent: "center" }}>
+        <p>Entrená cerca de casa. Socios, clases con cupo y kiosco, todo en un solo lugar.</p>
+        <div className="botonera">
           <Link className="boton" to="/clases">
             Ver clases
           </Link>
-          <Link className="boton secundario" to="/socios">
-            Hacerme socio
+          <Link className="boton secundario" to="/compra">
+            Comprar en el kiosco
           </Link>
         </div>
       </section>
 
       <section aria-labelledby="titulo-servicios">
-        <h2 id="titulo-servicios">Que ofrecemos</h2>
+        <h2 id="titulo-servicios">Qué ofrecemos</h2>
         <div className="rejilla tres">
           {SERVICIOS.map(([titulo, texto]) => (
             <article className="tarjeta" key={titulo}>
@@ -50,7 +55,8 @@ export default function Inicio() {
       </section>
 
       <section aria-labelledby="titulo-planes">
-        <h2 id="titulo-planes">Planes de membresia</h2>
+        <h2 id="titulo-planes">Planes de membresía</h2>
+        <p>Todos los planes dan el mismo acceso. Cuantos más meses pagás juntos, más barato te sale cada mes.</p>
         <div className="rejilla tres">
           {MEMBRESIAS.map((m) => (
             <article className="tarjeta" key={m.valor}>
@@ -60,13 +66,10 @@ export default function Inicio() {
             </article>
           ))}
         </div>
-        <p>
-          La cuota se abona en recepcion en efectivo o por transferencia. <Link to="/socios">Registrate como socio</Link>.
-        </p>
       </section>
 
       <section aria-labelledby="titulo-proximas">
-        <h2 id="titulo-proximas">Proximas clases</h2>
+        <h2 id="titulo-proximas">Próximas clases</h2>
         <Estado
           cargando={cargando}
           error={error}
@@ -82,7 +85,7 @@ export default function Inicio() {
                 <p>Instructor: {c.instructorNombre}</p>
                 <p>
                   <span className={"etiqueta" + (c.cuposDisponibles === 0 ? " baja" : "")}>
-                    {c.cuposDisponibles === 0 ? "Sin cupo" : c.cuposDisponibles + " lugares libres"}
+                    {textoCupos(c.cuposDisponibles)}
                   </span>
                 </p>
               </article>

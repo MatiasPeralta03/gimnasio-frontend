@@ -1,12 +1,10 @@
 import Campo from "./Campo.jsx";
+import { formatoPrecio } from "../js/formatos.js";
 import { MEDIOS_PAGO } from "../js/membresias.js";
 import { validarFormulario } from "../js/validaciones.js";
 
-/**
- * Formulario para registrar un pago (cuota o deuda): POST /api/pagos.
- * "concepto" es CUOTA o DEUDA; "montoMaximo" (opcional) limita el monto, por ejemplo a la deuda actual.
- */
-export default function FormPago({ socio, concepto, montoInicial, montoMaximo, textoExito, onEnviar, onCancelar }) {
+/** Formulario para pagar la deuda de un socio: POST /api/pagos con concepto DEUDA. */
+export default function FormPago({ socio, onEnviar, onCancelar }) {
   const alEnviar = (e) => {
     e.preventDefault();
     const form = e.currentTarget;
@@ -14,28 +12,23 @@ export default function FormPago({ socio, concepto, montoInicial, montoMaximo, t
   };
 
   return (
-    <form method="post" action="/api/pagos" onSubmit={alEnviar} noValidate data-ok={textoExito}>
+    <form method="post" action="/api/pagos" onSubmit={alEnviar} noValidate>
       <input type="hidden" name="socioId" value={socio.id} />
-      <input type="hidden" name="concepto" value={concepto} />
+      <input type="hidden" name="concepto" value="DEUDA" />
 
       <Campo
-        id={"pago-monto-" + concepto}
+        id="pago-monto"
         etiqueta="Monto a pagar ($)"
         name="monto"
         type="number"
         min="0.01"
-        max={montoMaximo}
+        max={socio.deuda}
         step="0.01"
         required
-        defaultValue={montoInicial}
-        ayuda={montoMaximo ? "No puede superar $ " + montoMaximo + "." : undefined}
-        data-mensaje-error={
-          montoMaximo
-            ? "Escribi un monto mayor a 0 y que no supere la deuda ($ " + montoMaximo + ")."
-            : "Escribi un monto mayor a 0."
-        }
+        defaultValue={socio.deuda}
+        data-mensaje-error={"Escribí un monto mayor a 0 y que no supere la deuda (" + formatoPrecio(socio.deuda) + ")."}
       />
-      <Campo id={"pago-medio-" + concepto} etiqueta="Medio de pago" as="select" name="medioPago" required>
+      <Campo id="pago-medio" etiqueta="Medio de pago" as="select" name="medioPago" required>
         {MEDIOS_PAGO.map((m) => (
           <option key={m.valor} value={m.valor}>
             {m.nombre}

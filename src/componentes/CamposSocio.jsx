@@ -1,6 +1,5 @@
 import Campo from "./Campo.jsx";
-import { MEDIOS_PAGO, MEMBRESIAS, precioDeMembresia } from "../js/membresias.js";
-import { formatoPrecio } from "../js/formatos.js";
+import { MEDIOS_PAGO, MEMBRESIAS } from "../js/membresias.js";
 import { PATRON_DNI, PATRON_TELEFONO } from "../js/validaciones.js";
 
 /** Campos del formulario de socio (se usan en el alta y en la edicion). "prefijo" evita ids repetidos. */
@@ -16,8 +15,8 @@ export default function CamposSocio({ prefijo, socio = {}, conDni = false }) {
           pattern={PATRON_DNI}
           inputMode="numeric"
           autoComplete="off"
-          ayuda="7 u 8 numeros, sin puntos."
-          data-mensaje-error="Escribi el DNI con 7 u 8 numeros, sin puntos ni letras."
+          ayuda="7 u 8 números, sin puntos."
+          data-mensaje-error="Escribí el DNI con 7 u 8 números, sin puntos ni letras."
         />
       )}
       <Campo
@@ -29,7 +28,7 @@ export default function CamposSocio({ prefijo, socio = {}, conDni = false }) {
         maxLength={100}
         defaultValue={socio.nombre}
         autoComplete="given-name"
-        data-mensaje-error="Escribi el nombre (al menos 2 letras)."
+        data-mensaje-error="Escribí el nombre (al menos 2 letras)."
       />
       <Campo
         id={prefijo + "-apellido"}
@@ -40,7 +39,7 @@ export default function CamposSocio({ prefijo, socio = {}, conDni = false }) {
         maxLength={100}
         defaultValue={socio.apellido}
         autoComplete="family-name"
-        data-mensaje-error="Escribi el apellido (al menos 2 letras)."
+        data-mensaje-error="Escribí el apellido (al menos 2 letras)."
       />
       <Campo
         id={prefijo + "-email"}
@@ -52,24 +51,24 @@ export default function CamposSocio({ prefijo, socio = {}, conDni = false }) {
         defaultValue={socio.email}
         autoComplete="email"
         ayuda="Ejemplo: nombre@correo.com"
-        data-mensaje-error="Escribi un email valido, por ejemplo nombre@correo.com."
+        data-mensaje-error="Escribí un email válido, por ejemplo nombre@correo.com."
       />
       <Campo
         id={prefijo + "-telefono"}
-        etiqueta="Telefono"
+        etiqueta="Teléfono"
         name="telefono"
         type="tel"
         pattern={PATRON_TELEFONO}
         maxLength={30}
         defaultValue={socio.telefono ?? ""}
         autoComplete="tel"
-        ayuda="Opcional. Solo numeros, espacios, + y guiones."
-        data-mensaje-error="El telefono debe tener entre 8 y 20 caracteres: numeros, espacios, + o guiones."
+        ayuda="Opcional. Solo números, espacios, + y guiones."
+        data-mensaje-error="El teléfono debe tener entre 8 y 20 caracteres: números, espacios, + o guiones."
       />
-      <Campo id={prefijo + "-membresia"} etiqueta="Membresia" as="select" name="membresia" required defaultValue={socio.membresia ?? "MENSUAL"}>
+      <Campo id={prefijo + "-membresia"} etiqueta="Membresía" as="select" name="membresia" required defaultValue={socio.membresia ?? "MENSUAL"}>
         {MEMBRESIAS.map((m) => (
           <option key={m.valor} value={m.valor}>
-            {m.nombre} ({formatoPrecio(precioDeMembresia(m.valor))})
+            {m.nombre}
           </option>
         ))}
       </Campo>

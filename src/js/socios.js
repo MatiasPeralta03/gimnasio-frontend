@@ -1,20 +1,15 @@
 /* Logica de Socios: consultas al backend, filtros y datos listos para mostrar. */
 import { obtener } from "./api.js";
 import { formatoFecha, formatoPrecio } from "./formatos.js";
-import { nombreDeMembresia } from "./membresias.js";
+import { nombreDeMedioPago, nombreDeMembresia } from "./membresias.js";
 
 export const listarSocios = () => obtener("/api/socios");
 export const obtenerSocio = (id) => obtener("/api/socios/" + id);
 
-/** Historial completo de un socio: visitas, compras, pagos y clases (4 consultas en paralelo). */
-export async function historialDeSocio(id) {
-  const [visitas, compras, pagos, clases] = await Promise.all([
-    obtener("/api/ingresos?socioId=" + id),
-    obtener("/api/ventas?socioId=" + id),
-    obtener("/api/pagos?socioId=" + id),
-    obtener("/api/inscripciones?socioId=" + id),
-  ]);
-  return { visitas, compras, pagos, clases };
+/** Socios que pueden comprar o inscribirse a una clase: los activos. */
+export async function listarSociosActivos() {
+  const socios = await listarSocios();
+  return socios.filter((s) => s.activo);
 }
 
 export const estadoDeSocio = (socio) => (socio.activo ? "Activo" : "Baja");
@@ -39,12 +34,11 @@ export function datosDetalleSocio(s) {
   return [
     ["ID", s.id],
     ["DNI", s.dni],
-    ["PIN de ingreso", s.pin],
     ["Nombre", nombreCompleto(s)],
     ["Email", s.email],
-    ["Telefono", s.telefono],
-    ["Membresia", nombreDeMembresia(s.membresia)],
-    ["Medio de pago", s.medioPago],
+    ["Teléfono", s.telefono],
+    ["Membresía", nombreDeMembresia(s.membresia)],
+    ["Medio de pago", nombreDeMedioPago(s.medioPago)],
     ["Deuda", formatoPrecio(s.deuda)],
     ["Estado", estadoDeSocio(s)],
     ["Fecha de alta", formatoFecha(s.fechaAlta)],

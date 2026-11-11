@@ -13,7 +13,7 @@ export function datosDetalleEmpleado(e) {
     ["DNI", e.dni],
     ["Nombre", e.nombre + " " + e.apellido],
     ["Email", e.email],
-    ["Telefono", e.telefono],
+    ["Teléfono", e.telefono],
     ["Usuario", e.usuario],
     ["Rol", nombreRol(e.rol)],
     ["Estado", e.activo ? "Activo" : "Baja"],

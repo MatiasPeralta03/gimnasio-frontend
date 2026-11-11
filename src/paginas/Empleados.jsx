@@ -26,12 +26,12 @@ function CamposEmpleado({ prefijo, empleado = {}, conCredenciales = false }) {
           pattern={PATRON_DNI}
           inputMode="numeric"
           autoComplete="off"
-          ayuda="7 u 8 numeros, sin puntos."
-          data-mensaje-error="Escribi el DNI con 7 u 8 numeros, sin puntos ni letras."
+          ayuda="7 u 8 números, sin puntos."
+          data-mensaje-error="Escribí el DNI con 7 u 8 números, sin puntos ni letras."
         />
       )}
-      <Campo id={prefijo + "-nombre"} etiqueta="Nombre" name="nombre" required minLength={2} maxLength={100} defaultValue={empleado.nombre} data-mensaje-error="Escribi el nombre (al menos 2 letras)." />
-      <Campo id={prefijo + "-apellido"} etiqueta="Apellido" name="apellido" required minLength={2} maxLength={100} defaultValue={empleado.apellido} data-mensaje-error="Escribi el apellido (al menos 2 letras)." />
+      <Campo id={prefijo + "-nombre"} etiqueta="Nombre" name="nombre" required minLength={2} maxLength={100} defaultValue={empleado.nombre} data-mensaje-error="Escribí el nombre (al menos 2 letras)." />
+      <Campo id={prefijo + "-apellido"} etiqueta="Apellido" name="apellido" required minLength={2} maxLength={100} defaultValue={empleado.apellido} data-mensaje-error="Escribí el apellido (al menos 2 letras)." />
       <Campo
         id={prefijo + "-email"}
         etiqueta="Email"
@@ -40,17 +40,17 @@ function CamposEmpleado({ prefijo, empleado = {}, conCredenciales = false }) {
         required
         maxLength={150}
         defaultValue={empleado.email}
-        data-mensaje-error="Escribi un email valido, por ejemplo nombre@correo.com."
+        data-mensaje-error="Escribí un email válido, por ejemplo nombre@correo.com."
       />
       <Campo
         id={prefijo + "-telefono"}
-        etiqueta="Telefono"
+        etiqueta="Teléfono"
         name="telefono"
         type="tel"
         pattern={PATRON_TELEFONO}
         defaultValue={empleado.telefono ?? ""}
         ayuda="Opcional."
-        data-mensaje-error="El telefono debe tener entre 8 y 20 caracteres: numeros, espacios, + o guiones."
+        data-mensaje-error="El teléfono debe tener entre 8 y 20 caracteres: números, espacios, + o guiones."
       />
       <Campo id={prefijo + "-rol"} etiqueta="Rol" as="select" name="rol" required defaultValue={empleado.rol ?? "EMPLEADO"}>
         <option value="EMPLEADO">Empleado</option>
@@ -65,8 +65,8 @@ function CamposEmpleado({ prefijo, empleado = {}, conCredenciales = false }) {
             required
             pattern={PATRON_USUARIO}
             autoComplete="off"
-            ayuda="De 3 a 30 caracteres: letras, numeros, punto, guion o guion bajo."
-            data-mensaje-error="El usuario debe tener de 3 a 30 caracteres: letras, numeros, punto, guion o guion bajo."
+            ayuda="De 3 a 30 caracteres: letras, números, punto, guion o guion bajo."
+            data-mensaje-error="El usuario debe tener de 3 a 30 caracteres: letras, números, punto, guion o guion bajo."
           />
           <Campo
             id={prefijo + "-password"}
@@ -85,14 +85,19 @@ function CamposEmpleado({ prefijo, empleado = {}, conCredenciales = false }) {
   );
 }
 
-/** Pantalla de empleados (para el administrador): alta, edicion, contraseña y baja. */
+/** Pantalla de empleados: alta, detalle, edicion y baja. */
 export default function Empleados() {
   useTitulo("Empleados");
   const { datos: empleados, cargando, error, recargar } = useDatos(listarEmpleados);
-  const { mensaje, avisarError, ejecutar } = useMensaje();
+  const { mensaje, avisarError, limpiar, ejecutar } = useMensaje();
   const [detalle, setDetalle] = useState(null);
   const [editando, setEditando] = useState(null);
-  const [clave, setClave] = useState(null);
+
+  // Al abrir la ventana se limpia el mensaje anterior: ahi adentro solo se ve lo que pase en ella.
+  function abrirEdicion(empleado) {
+    limpiar();
+    setEditando(empleado);
+  }
 
   function alta(e) {
     e.preventDefault();
@@ -113,22 +118,9 @@ export default function Empleados() {
     });
   }
 
-  // La confirmacion de la contraseña se valida en el navegador (el campo "repetir" no se envia).
-  function avisarSiNoCoincide(e) {
-    const form = e.currentTarget.form;
-    const repetir = form.elements["clave-repetir"];
-    repetir.setCustomValidity(form.elements["password"].value === repetir.value ? "" : "Las contraseñas no coinciden.");
-  }
-
-  function cambiarClave(e) {
-    e.preventDefault();
-    if (!validarFormulario(e.currentTarget)) return;
-    ejecutar(() => enviar(e.currentTarget), "Contraseña actualizada.", () => setClave(null));
-  }
-
   function baja(e, emp) {
     e.preventDefault();
-    if (!window.confirm("Dar de baja a " + emp.nombre + " " + emp.apellido + "?")) return;
+    if (!window.confirm("¿Dar de baja a " + emp.nombre + " " + emp.apellido + "?")) return;
     ejecutar(() => enviar(e.currentTarget), "Empleado dado de baja.", recargar);
   }
 
@@ -157,7 +149,7 @@ export default function Empleados() {
         </form>
       </section>
 
-      <section aria-labelledby="titulo-listado">
+      <section className="panel" aria-labelledby="titulo-listado">
         <h2 id="titulo-listado">Listado de empleados</h2>
         <p>
           <button type="button" className="secundario" onClick={recargar}>
@@ -182,11 +174,8 @@ export default function Empleados() {
                   <button type="button" className="secundario" onClick={() => verDetalle(emp.id)}>
                     Ver<span className="solo-lectores"> {emp.nombre} {emp.apellido}</span>
                   </button>
-                  <button type="button" className="secundario" onClick={() => setEditando(emp)}>
+                  <button type="button" className="secundario" onClick={() => abrirEdicion(emp)}>
                     Editar<span className="solo-lectores"> {emp.nombre} {emp.apellido}</span>
-                  </button>
-                  <button type="button" className="secundario" onClick={() => setClave(emp)}>
-                    Contraseña<span className="solo-lectores"> de {emp.nombre} {emp.apellido}</span>
                   </button>
                   {emp.activo && (
                     /* DELETE /api/empleados/{id} (baja logica) */
@@ -214,48 +203,11 @@ export default function Empleados() {
       <Dialogo abierto={editando !== null} onCerrar={() => setEditando(null)} titulo="Editar empleado">
         {editando && (
           <form key={editando.id} method="post" data-metodo="PUT" action={"/api/empleados/" + editando.id} onSubmit={modificar} noValidate>
+            <Mensaje mensaje={mensaje} />
             <CamposEmpleado prefijo="editar" empleado={editando} />
             <div className="botonera">
               <button type="submit">Guardar cambios</button>
               <button type="button" className="secundario" onClick={() => setEditando(null)}>
-                Cancelar
-              </button>
-            </div>
-          </form>
-        )}
-      </Dialogo>
-
-      {/* CAMBIO DE CONTRASEÑA: PUT /api/empleados/{id}/password */}
-      <Dialogo abierto={clave !== null} onCerrar={() => setClave(null)} titulo="Cambiar contraseña">
-        {clave && (
-          <form key={clave.id} method="post" data-metodo="PUT" action={"/api/empleados/" + clave.id + "/password"} onSubmit={cambiarClave} noValidate>
-            <p>
-              Empleado: {clave.nombre} {clave.apellido} ({clave.usuario})
-            </p>
-            <Campo
-              id="clave-nueva"
-              etiqueta="Contraseña nueva"
-              name="password"
-              type="password"
-              required
-              minLength={6}
-              autoComplete="new-password"
-              onChange={avisarSiNoCoincide}
-              ayuda="Al menos 6 caracteres."
-              data-mensaje-error="La contraseña debe tener al menos 6 caracteres."
-            />
-            <Campo
-              id="clave-repetir"
-              etiqueta="Repetir contraseña"
-              type="password"
-              required
-              autoComplete="new-password"
-              onChange={avisarSiNoCoincide}
-              data-mensaje-error="Repeti la contraseña nueva."
-            />
-            <div className="botonera">
-              <button type="submit">Guardar contraseña</button>
-              <button type="button" className="secundario" onClick={() => setClave(null)}>
                 Cancelar
               </button>
             </div>

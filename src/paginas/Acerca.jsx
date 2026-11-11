@@ -3,6 +3,9 @@ import useTitulo from "../hooks/useTitulo.js";
 
 const INTEGRANTES = ["Ezequiel Ibarra", "Lucas Bollini", "Matias Peralta", "Ignacio Barborini"];
 
+/** Iniciales para la tarjeta de cada integrante: "Lucas Bollini" -> "LB". */
+const iniciales = (nombre) => nombre.split(" ").map((parte) => parte[0]).join("");
+
 /** Descripcion de la compañia, integrantes del grupo y tecnologias usadas. */
 export default function Acerca() {
   useTitulo("Acerca de");
@@ -11,31 +14,36 @@ export default function Acerca() {
     <>
       <h1>Acerca de</h1>
 
-      <section aria-labelledby="titulo-compania">
-        <h2 id="titulo-compania">La compañia</h2>
-        {/* TODO: ajustar la descripcion con los datos reales de la compañia del grupo */}
+      <section className="panel" aria-labelledby="titulo-compania">
+        <h2 id="titulo-compania">La compañía</h2>
         <p>
-          Gimnasio de Barrio es un gimnasio de cercania que ofrece sala de musculacion, clases grupales y un kiosco
-          con productos para deportistas. Nuestro objetivo es brindar un servicio simple y cercano, con membresias
-          mensuales, trimestrales y anuales.
+          Gimnasio de Barrio es un gimnasio de cercanía que ofrece sala de musculación, clases grupales y un kiosco con
+          productos para deportistas. Nuestro objetivo es brindar un servicio simple y cercano, con membresías mensuales,
+          trimestrales y anuales.
         </p>
         <p>
-          Este sitio es parte de un trabajo practico de Aplicaciones Interactivas (UADE): un sistema para gestionar
-          socios, clases, ingresos, kiosco y cobros. Mira tambien nuestra <Link to="/privacidad">politica de privacidad</Link>.
+          Este sitio es parte del trabajo práctico de Aplicaciones Interactivas (UADE): un sistema para gestionar socios,
+          empleados, clases con cupos y las compras del kiosco. Mirá también nuestras{" "}
+          <Link to="/politicas">políticas de seguridad y privacidad</Link>.
         </p>
       </section>
 
-      <section aria-labelledby="titulo-integrantes">
+      <section className="panel" aria-labelledby="titulo-integrantes">
         <h2 id="titulo-integrantes">Integrantes del grupo</h2>
-        <ul>
+        <ul className="rejilla auto lista-limpia">
           {INTEGRANTES.map((nombre) => (
-            <li key={nombre}>{nombre}</li>
+            <li className="integrante" key={nombre}>
+              <span className="avatar" aria-hidden="true">
+                {iniciales(nombre)}
+              </span>
+              {nombre}
+            </li>
           ))}
         </ul>
       </section>
 
-      <section aria-labelledby="titulo-tecnologias">
-        <h2 id="titulo-tecnologias">Tecnologias</h2>
+      <section className="panel" aria-labelledby="titulo-tecnologias">
+        <h2 id="titulo-tecnologias">Tecnologías</h2>
         <ul>
           <li>Front-end: React, React Router, HTML5, CSS y JavaScript.</li>
           <li>Back-end: Java, Spring Boot, JPA/Hibernate y MySQL (API REST en JSON).</li>

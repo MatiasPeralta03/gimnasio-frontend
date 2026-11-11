@@ -44,12 +44,14 @@ export function obtener(url) {
   return pedir(url, { method: "GET", headers: { Accept: "application/json" } });
 }
 
+const ERROR_DEL_SERVIDOR = "El servidor no pudo procesar el pedido. Revisá que los datos no estén repetidos e intentá de nuevo.";
+
 async function pedir(url, opciones) {
   let respuesta;
   try {
     respuesta = await fetch(url, opciones);
   } catch {
-    throw new Error("No se pudo conectar con el servidor. Verifique que el backend este corriendo.");
+    throw new Error("No se pudo conectar con el servidor. Verificá que el backend esté corriendo.");
   }
   if (respuesta.status === 204) return null;
   const texto = await respuesta.text();
@@ -60,7 +62,7 @@ async function pedir(url, opciones) {
     // la respuesta no es JSON
   }
   if (!respuesta.ok) {
-    throw new Error((json && (json.detail || json.title)) || "Error " + respuesta.status);
+    throw new Error(json?.detail || (respuesta.status >= 500 ? ERROR_DEL_SERVIDOR : json?.title) || ERROR_DEL_SERVIDOR);
   }
   return json;
 }
