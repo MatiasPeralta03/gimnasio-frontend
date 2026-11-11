@@ -1,6 +1,7 @@
 # Front-end: guía para entenderlo y defenderlo
 
-Está organizada según la **rúbrica del front** (8 criterios, 100 puntos).
+Está organizada según la **rúbrica del front** (8 criterios, 100 puntos). Para preparar la defensa (qué hace cada
+archivo, guion de la demo y preguntas probables) ver [DEFENSA.md](DEFENSA.md).
 
 ## 1. Cómo está hecho
 

@@ -4,7 +4,8 @@ Interfaz web del TPO de Aplicaciones Interactivas (UADE). Es una app **React** (
 que consume la API REST del back-end en Spring Boot, que está en otro repositorio:
 [aplicaciones-interactivas](https://github.com/MatiasPeralta03/aplicaciones-interactivas).
 
-Cómo está hecho, cómo cumple la rúbrica y preguntas para la defensa: [docs/FRONTEND.md](docs/FRONTEND.md).
+- Cómo está hecho y cómo cumple la rúbrica: [docs/FRONTEND.md](docs/FRONTEND.md).
+- Preparación para la defensa (qué hace cada archivo, guion de la demo, preguntas): [docs/DEFENSA.md](docs/DEFENSA.md).
 
 ## Cómo levantarlo
 
