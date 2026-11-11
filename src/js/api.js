@@ -22,7 +22,8 @@ export function datosDe(form) {
     if (campo.type === "number") {
       datos[campo.name] = campo.value === "" ? null : Number(campo.value);
     } else {
-      datos[campo.name] = campo.value;
+      // Sin espacios de mas al principio o al final ("  Ana " llega como "Ana").
+      datos[campo.name] = campo.value.trim();
     }
   }
   return datos;

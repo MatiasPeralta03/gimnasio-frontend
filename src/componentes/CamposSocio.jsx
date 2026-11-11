@@ -1,6 +1,6 @@
 import Campo from "./Campo.jsx";
 import { MEDIOS_PAGO, MEMBRESIAS } from "../js/membresias.js";
-import { PATRON_DNI, PATRON_TELEFONO } from "../js/validaciones.js";
+import { PATRON_DNI, PATRON_NOMBRE, PATRON_TELEFONO } from "../js/validaciones.js";
 
 /** Campos del formulario de socio (se usan en el alta y en la edicion). "prefijo" evita ids repetidos. */
 export default function CamposSocio({ prefijo, socio = {}, conDni = false }) {
@@ -28,7 +28,7 @@ export default function CamposSocio({ prefijo, socio = {}, conDni = false }) {
         maxLength={100}
         defaultValue={socio.nombre}
         autoComplete="given-name"
-        data-mensaje-error="Escribí el nombre (al menos 2 letras)."
+        pattern={PATRON_NOMBRE} data-mensaje-error="Escribí el nombre: al menos 2 letras, sin números."
       />
       <Campo
         id={prefijo + "-apellido"}
@@ -39,7 +39,7 @@ export default function CamposSocio({ prefijo, socio = {}, conDni = false }) {
         maxLength={100}
         defaultValue={socio.apellido}
         autoComplete="family-name"
-        data-mensaje-error="Escribí el apellido (al menos 2 letras)."
+        pattern={PATRON_NOMBRE} data-mensaje-error="Escribí el apellido: al menos 2 letras, sin números."
       />
       <Campo
         id={prefijo + "-email"}

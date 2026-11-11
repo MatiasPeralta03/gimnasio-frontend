@@ -2,7 +2,7 @@ import { useState } from "react";
 import { enviar } from "../js/api.js";
 import { formatoPrecio } from "../js/formatos.js";
 import { datosDetalleProducto, filtrarProductos, hayStock, listarProductos, obtenerProducto } from "../js/productos.js";
-import { validarFormulario } from "../js/validaciones.js";
+import { PATRON_TEXTO, PRECIO_MAXIMO, STOCK_MAXIMO, validarFormulario } from "../js/validaciones.js";
 import useDatos from "../hooks/useDatos.js";
 import useMensaje from "../hooks/useMensaje.js";
 import useTitulo from "../hooks/useTitulo.js";
@@ -24,8 +24,9 @@ function CamposProducto({ prefijo, producto = {} }) {
         required
         minLength={2}
         maxLength={100}
+        pattern={PATRON_TEXTO}
         defaultValue={producto.nombre}
-        data-mensaje-error="Escribí el nombre del producto (al menos 2 letras)."
+        data-mensaje-error="Escribí el nombre del producto (al menos 2 caracteres, no solo espacios)."
       />
       <Campo
         id={prefijo + "-precio"}
@@ -33,10 +34,11 @@ function CamposProducto({ prefijo, producto = {} }) {
         name="precio"
         type="number"
         min="0.01"
+        max={PRECIO_MAXIMO}
         step="0.01"
         required
         defaultValue={producto.precio}
-        data-mensaje-error="El precio debe ser mayor a 0."
+        data-mensaje-error={"El precio debe ser mayor a 0 y no superar " + formatoPrecio(PRECIO_MAXIMO) + "."}
       />
       <Campo
         id={prefijo + "-stock"}
@@ -44,10 +46,11 @@ function CamposProducto({ prefijo, producto = {} }) {
         name="stock"
         type="number"
         min="0"
+        max={STOCK_MAXIMO}
         step="1"
         required
         defaultValue={producto.stock}
-        data-mensaje-error="El stock debe ser un número entero, 0 o mayor."
+        data-mensaje-error={"El stock debe ser un número entero entre 0 y " + STOCK_MAXIMO + "."}
       />
     </div>
   );

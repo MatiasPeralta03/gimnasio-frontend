@@ -2,7 +2,7 @@ import { useState } from "react";
 import { enviar } from "../js/api.js";
 import { datosDetalleEmpleado, listarEmpleados, nombreRol, obtenerEmpleado } from "../js/empleados.js";
 import { formatoFecha } from "../js/formatos.js";
-import { PATRON_DNI, PATRON_TELEFONO, PATRON_USUARIO, validarFormulario } from "../js/validaciones.js";
+import { PATRON_DNI, PATRON_NOMBRE, PATRON_TELEFONO, PATRON_USUARIO, validarFormulario } from "../js/validaciones.js";
 import useDatos from "../hooks/useDatos.js";
 import useMensaje from "../hooks/useMensaje.js";
 import useTitulo from "../hooks/useTitulo.js";
@@ -30,8 +30,8 @@ function CamposEmpleado({ prefijo, empleado = {}, conCredenciales = false }) {
           data-mensaje-error="Escribí el DNI con 7 u 8 números, sin puntos ni letras."
         />
       )}
-      <Campo id={prefijo + "-nombre"} etiqueta="Nombre" name="nombre" required minLength={2} maxLength={100} defaultValue={empleado.nombre} data-mensaje-error="Escribí el nombre (al menos 2 letras)." />
-      <Campo id={prefijo + "-apellido"} etiqueta="Apellido" name="apellido" required minLength={2} maxLength={100} defaultValue={empleado.apellido} data-mensaje-error="Escribí el apellido (al menos 2 letras)." />
+      <Campo id={prefijo + "-nombre"} etiqueta="Nombre" name="nombre" required minLength={2} maxLength={100} defaultValue={empleado.nombre} pattern={PATRON_NOMBRE} data-mensaje-error="Escribí el nombre: al menos 2 letras, sin números." />
+      <Campo id={prefijo + "-apellido"} etiqueta="Apellido" name="apellido" required minLength={2} maxLength={100} defaultValue={empleado.apellido} pattern={PATRON_NOMBRE} data-mensaje-error="Escribí el apellido: al menos 2 letras, sin números." />
       <Campo
         id={prefijo + "-email"}
         etiqueta="Email"

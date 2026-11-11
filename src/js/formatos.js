@@ -42,5 +42,13 @@ export function ahoraParaInput() {
   return local.toISOString().slice(0, 16);
 }
 
+/** Fecha y hora local dentro de "anios" años: tope para no aceptar clases en el año 9999. */
+export function enAniosParaInput(anios) {
+  const fecha = new Date();
+  fecha.setFullYear(fecha.getFullYear() + anios);
+  const local = new Date(fecha.getTime() - fecha.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
 /** Un <input type="datetime-local"> da "2026-10-05T18:00"; el backend espera segundos ("...:00"). */
 export const paraBackend = (valor) => (valor && valor.length === 16 ? valor + ":00" : valor);

@@ -66,7 +66,59 @@ si fallaba el segundo, el primero ya quedaba vendido. Con una sola venta, la ope
 
 La forma de pago (efectivo o transferencia) se muestra en el comprobante, pero el back solo guarda si quedó pagada o no.
 
-## 4. Cómo cumple cada criterio de la rúbrica
+## 4. Flujo de trabajo del código
+
+**Cómo arranca:** `index.html` (tiene `<div id="root">`) → `main.jsx` (monta `<App>` dentro del `BrowserRouter`)
+→ `App.jsx` (encabezado, `<Routes>` y pie) → la página de la ruta actual, por ejemplo `paginas/Socios.jsx`.
+
+**Cómo viaja un dato, con el ejemplo de dar de alta un socio:**
+
+1. `Socios.jsx` dibuja el formulario. Los campos son componentes `<Campo>` con sus reglas (`required`, `pattern`...).
+2. Al enviar, `alta()` hace `e.preventDefault()` y `validarFormulario()`. Si un campo no cumple, el error aparece
+   debajo del campo y el foco va ahí. No se manda nada.
+3. Si está todo bien, `ejecutar()` (de `useMensaje`) llama a `enviar(form)` de `js/api.js`.
+4. `api.js` arma el JSON con los campos (recortando espacios) y hace `fetch` con el método y la URL del formulario:
+   `POST /api/socios`.
+5. Vite reenvía el pedido a Spring. El back valida, guarda en MySQL y responde con el socio creado o con un error.
+6. Si salió bien, se muestra "Socio ... creado." y `recargar()` (de `useDatos`) vuelve a pedir la lista. Al cambiar
+   el estado (`setDatos`), React vuelve a dibujar solo lo que cambió.
+
+**Formato de datos entre front y back (JSON):**
+
+| Dato | Formato | Ejemplo |
+|---|---|---|
+| Fecha y hora (`LocalDateTime`) | `aaaa-mm-ddThh:mm:ss` | `"2026-11-20T18:00:00"` |
+| Fecha (`LocalDate`) | `aaaa-mm-dd` | `"2026-11-05"` |
+| Montos y cantidades | número, sin símbolo | `1500.5`, `3` |
+| Opciones fijas (enums) | texto en mayúsculas | `"MENSUAL"`, `"EFECTIVO"`, `"ADMIN"` |
+| Ids de relaciones | número | `"socioId": 2` |
+
+El front convierte al mostrar (`$ 1.500,50`, `20/11/2026 18:00`) y vuelve a este formato al enviar. Por ejemplo,
+`paraBackend()` le agrega los segundos a la hora que da el `<input type="datetime-local">`.
+
+## 5. Qué pasa si lo quieren romper
+
+| Intento | Qué hace el front |
+|---|---|
+| Campos vacíos o con solo espacios | No deja enviar y marca el campo |
+| Nombre o apellido con números | No deja enviar ("sin números") |
+| DNI con letras o con puntos | No deja enviar: 7 u 8 números |
+| Precio negativo o absurdo (1 billón) | Mínimo $0,01, máximo $10.000.000 |
+| Stock con decimales o enorme | Entero entre 0 y 100.000 |
+| Clase en el pasado o en el año 9999 | Solo fechas futuras, dentro de los próximos 2 años |
+| Capacidad menor a los inscriptos | No deja guardar |
+| Comprar más que el stock o una cantidad negativa | Cantidad entre 1 y el stock disponible |
+| Pagar más que la deuda | El monto no puede superar la deuda |
+| Doble clic en Guardar o en Confirmar compra | Se manda un solo pedido |
+| HTML o `<script>` en un nombre | Se muestra como texto: React no lo ejecuta |
+| Back apagado | "No se pudo conectar con el servidor" y botón **Reintentar** |
+| Dato repetido (DNI, email, usuario) | Se muestra el mensaje del back |
+| URL que no existe | Página "no encontrada" con enlace al inicio |
+
+**Limitación importante:** la validación del front se puede saltear llamando a la API directamente, por ejemplo
+desde Postman. Por eso el back tiene que validar todo de nuevo (ver la sección 9).
+
+## 6. Cómo cumple cada criterio de la rúbrica
 
 | Criterio | Puntos | Cómo lo cumple |
 |---|---|---|
@@ -82,7 +134,7 @@ La forma de pago (efectivo o transferencia) se muestra en el comprobante, pero e
 Se verificó con un recorrido automático contra el back real, con axe (accesibilidad WCAG 2.1 AA, claro y oscuro, 375 a
 1280 px) y sin desbordes horizontales.
 
-## 5. Preguntas que pueden hacer
+## 7. Preguntas que pueden hacer
 
 | Pregunta | Respuesta corta |
 |---|---|
@@ -97,8 +149,21 @@ Se verificó con un recorrido automático contra el back real, con axe (accesibi
 | ¿Cliente y empleado? | No hay login: un único usuario, el empleado del gimnasio, opera todo el sistema |
 | ¿De dónde salen los precios de la landing? | Son contenido fijo en `js/membresias.js`. El back no guarda precios de membresía |
 
-## 6. Pendientes conocidos del back
+## 8. Puntos que marcó el profe
 
+| Punto | Estado |
+|---|---|
+| Adecuado al negocio; hipervínculos que funcionen y bien ubicados | Menú arriba, Políticas y Acerca de en el pie de todas las páginas, enlace externo con `rel="noopener"` |
+| Políticas de privacidad y página de la empresa | `/politicas` y `/acerca` |
+| Preparado para conectarse a un back | Conectado; `BACKEND_URL` permite mover el servidor |
+| Flujo del negocio: alta de cliente, compra | Socios, Clases con cupos, Comprar con comprobante |
+| Login, modo admin y modo empleado, olvido de contraseña | **Pendiente:** ver la sección 9 |
+| Responsive | Probado de 375 a 1280 px |
+| Lo van a querer romper | Sección 5 |
+
+## 9. Pendientes conocidos
+
+- **Login:** no hay. El back no tiene un endpoint para iniciar sesión ni protege la API.
 - Productos: no valida nombre vacío ni precio negativo. El front lo bloquea, pero Postman no.
 - Socios y empleados: editar con un email repetido da error 500 en vez de 409.
 - Empleados: la contraseña se guarda sin cifrar.

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { enviar, datosDe } from "../js/api.js";
 import { filtrarClases, listarClases, listarInstructores } from "../js/clases.js";
-import { ahoraParaInput, formatoFechaHora, paraBackend, paraInputFechaHora } from "../js/formatos.js";
-import { validarFormulario } from "../js/validaciones.js";
+import { ahoraParaInput, enAniosParaInput, formatoFechaHora, paraBackend, paraInputFechaHora } from "../js/formatos.js";
+import { PATRON_TEXTO, validarFormulario } from "../js/validaciones.js";
 import useDatos from "../hooks/useDatos.js";
 import useMensaje from "../hooks/useMensaje.js";
 import useTitulo from "../hooks/useTitulo.js";
@@ -28,6 +28,7 @@ function CamposClase({ prefijo, clase = {}, instructores }) {
         required
         minLength={3}
         maxLength={100}
+        pattern={PATRON_TEXTO}
         defaultValue={clase.actividad}
         ayuda="Ejemplo: Funcional, Spinning, Yoga."
         data-mensaje-error="Escribí el nombre de la actividad (al menos 3 letras)."
@@ -39,8 +40,11 @@ function CamposClase({ prefijo, clase = {}, instructores }) {
         type="datetime-local"
         required
         min={esAlta ? ahoraParaInput() : undefined}
+        max={enAniosParaInput(2)}
         defaultValue={paraInputFechaHora(clase.horario)}
-        data-mensaje-error={esAlta ? "Elegí un día y una hora futuros." : "Elegí el día y la hora de la clase."}
+        data-mensaje-error={
+          esAlta ? "Elegí un día y una hora futuros, dentro de los próximos 2 años." : "Elegí el día y la hora (dentro de los próximos 2 años)."
+        }
       />
       <Campo
         id={prefijo + "-capacidad"}
