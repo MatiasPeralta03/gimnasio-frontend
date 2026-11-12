@@ -8,6 +8,7 @@ que consume la API REST del back-end en Spring Boot, que está en otro repositor
 - Preparación para la defensa (qué hace cada archivo, guion de la demo, preguntas): [docs/DEFENSA.md](docs/DEFENSA.md).
 - Paso a paso para entender el código: [docs/PASO-A-PASO.md](docs/PASO-A-PASO.md).
 - Qué hace cada archivo, con su código importante: [docs/ARCHIVOS.md](docs/ARCHIVOS.md).
+- Lo que ves en pantalla → dónde está en el código: [docs/PANTALLAS.md](docs/PANTALLAS.md).
 
 ## Cómo levantarlo
 
