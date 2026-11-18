@@ -1,7 +1,7 @@
 import { formatoFechaHora, formatoPrecio } from "../js/formatos.js";
-import { nombreFormaDePago } from "../js/compra.js";
+import { nombreFormaDePago } from "../js/ventas.js";
 
-/** Comprobante de la compra, armado con la venta que devolvio el backend (se puede imprimir). */
+/** Comprobante de la venta, armado con la venta que devolvio el backend (se puede imprimir). */
 export default function Ticket({ venta }) {
   return (
     <article className="ticket" aria-labelledby="titulo-ticket">
@@ -17,7 +17,7 @@ export default function Ticket({ venta }) {
         Pago: {nombreFormaDePago(venta.formaDePago)}
       </p>
       <table>
-        <caption className="solo-lectores">Detalle de la compra</caption>
+        <caption className="solo-lectores">Detalle de la venta</caption>
         <thead>
           <tr>
             <th scope="col">Producto</th>

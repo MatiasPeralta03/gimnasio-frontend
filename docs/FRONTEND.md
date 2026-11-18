@@ -21,7 +21,7 @@ src/
 │   └── useTitulo.js    título de la pestaña
 └── js/               lógica sin HTML
     ├── api.js          el único lugar que hace fetch
-    ├── socios.js, clases.js, productos.js, empleados.js, compra.js
+    ├── socios.js, clases.js, productos.js, empleados.js, ventas.js
     ├── validaciones.js, formatos.js, membresias.js
 ```
 
@@ -49,11 +49,14 @@ Navegador → Vite (localhost:5173) → proxy /api → Spring Boot (localhost:80
 - **Errores:** si el back responde con error, `api.js` toma el `detail` y se muestra en pantalla. Así el usuario ve
   el mismo mensaje que generó la regla de negocio en Java.
 
-## 3. El flujo de compra
+## 3. El flujo de ventas
 
-1. **Elegir producto:** `GET /api/productos?soloDisponibles=true`; se muestran los que tienen stock.
-2. **Socio y pago:** `GET /api/socios` (solo activos). Se elige cantidad, socio y forma de pago. El total se calcula
-   en el navegador. Hasta acá no se guardó nada.
+La pantalla **Ventas** (`/ventas`) la usa el personal del gimnasio (admin o empleado) para registrar lo que se vende
+en el kiosco. Tiene dos partes: el registro de una venta en 3 pasos y el listado de ventas ya registradas.
+
+1. **Cargar producto:** `GET /api/productos?soloDisponibles=true`. El empleado elige el producto en un desplegable
+   (solo los que tienen stock) y escribe la cantidad, que se valida entre 1 y el stock. Se ve el subtotal.
+2. **Socio y pago:** `GET /api/socios` (solo activos). Se elige el socio y la forma de pago. Hasta acá no se guardó nada.
 3. **Confirmar:** un solo `POST /api/ventas`:
    ```json
    { "socioId": 2, "productoId": 4, "cantidad": 1, "pagada": true }
@@ -62,7 +65,10 @@ Navegador → Vite (localhost:5173) → proxy /api → Spring Boot (localhost:80
    si `pagada` es `false` y guarda la venta. Si falla una regla responde 409 y el front muestra el motivo.
 4. **Comprobante:** se arma con la venta que devolvió el back (número, monto y fecha reales).
 
-**Por qué un producto por compra:** en el back cada `Venta` es de un producto. Un carrito haría un POST por producto, y
+**Ventas registradas:** `GET /api/ventas`, ordenadas de la más nueva a la más vieja, con socio, producto, cantidad,
+total y si quedó pagada o "a cuenta". Se recarga sola después de registrar una venta.
+
+**Por qué un producto por venta:** en el back cada `Venta` es de un producto. Un carrito haría un POST por producto, y
 si fallaba el segundo, el primero ya quedaba vendido. Con una sola venta, la operación es atómica.
 
 La forma de pago (efectivo o transferencia) se muestra en el comprobante, pero el back solo guarda si quedó pagada o no.
@@ -108,9 +114,9 @@ El front convierte al mostrar (`$ 1.500,50`, `20/11/2026 18:00`) y vuelve a este
 | Stock con decimales o enorme | Entero entre 0 y 100.000 |
 | Clase en el pasado o en el año 9999 | Solo fechas futuras, dentro de los próximos 2 años |
 | Capacidad menor a los inscriptos | No deja guardar |
-| Comprar más que el stock o una cantidad negativa | Cantidad entre 1 y el stock disponible |
+| Vender más que el stock o una cantidad negativa | Cantidad entre 1 y el stock disponible |
 | Pagar más que la deuda | El monto no puede superar la deuda |
-| Doble clic en Guardar o en Confirmar compra | Se manda un solo pedido |
+| Doble clic en Guardar o en Registrar venta | Se manda un solo pedido |
 | HTML o `<script>` en un nombre | Se muestra como texto: React no lo ejecuta |
 | Back apagado | "No se pudo conectar con el servidor" y botón **Reintentar** |
 | Dato repetido (DNI, email, usuario) | Se muestra el mensaje del back |
@@ -157,7 +163,7 @@ Se verificó con un recorrido automático contra el back real, con axe (accesibi
 | Adecuado al negocio; hipervínculos que funcionen y bien ubicados | Menú arriba, Políticas y Acerca de en el pie de todas las páginas, enlace externo con `rel="noopener"` |
 | Políticas de privacidad y página de la empresa | `/politicas` y `/acerca` |
 | Preparado para conectarse a un back | Conectado; `BACKEND_URL` permite mover el servidor |
-| Flujo del negocio: alta de cliente, compra | Socios, Clases con cupos, Comprar con comprobante |
+| Flujo del negocio: alta de cliente, compra | Socios, Clases con cupos, Ventas con comprobante |
 | Login, modo admin y modo empleado, olvido de contraseña | **Pendiente:** ver la sección 9 |
 | Responsive | Probado de 375 a 1280 px |
 | Lo van a querer romper | Sección 5 |

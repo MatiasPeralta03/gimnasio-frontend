@@ -25,13 +25,30 @@ Para apuntar a un back-end en otro equipo, copiar `.env.example` como `.env` y c
 | Ruta | Qué hace |
 |---|---|
 | `/` | Presentación del gimnasio, planes y próximas clases |
+| `/login` | Inicio de sesión (usuario y contraseña) |
 | `/socios` | Alta, listado con búsqueda y filtro, detalle, edición, baja, reactivación y pago de deuda |
 | `/empleados` | Alta, listado, detalle, edición y baja |
 | `/clases` | Alta, agenda con cupos, edición, cancelación e inscripción de socios |
 | `/productos` | Alta, catálogo con búsqueda y orden, detalle, edición y borrado |
-| `/compra` | Flujo de compra: producto → socio y pago → comprobante |
+| `/ventas` | Gestión de ventas del kiosco: cargar producto → socio y pago → comprobante, y listado de ventas registradas |
 | `/acerca` | La compañía, los integrantes y las tecnologías |
 | `/politicas` | Políticas de seguridad y privacidad, con enlace al sitio oficial (AAIP) |
+
+## Login y roles
+
+Las pantallas de gestión (Socios, Clases, Productos y Ventas) piden iniciar sesión. **Empleados** es solo
+para el rol **ADMIN**: un usuario con rol **EMPLEADO** no ve el enlace en el menú y, si escribe la URL,
+ve un aviso de "sin permiso". Inicio, Acerca de y Políticas son públicas.
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `admin123` | ADMIN |
+| `empleado` | `empleado123` | EMPLEADO |
+
+Es una **simulación del lado del front** (`src/js/sesion.js`): el back no tiene endpoint de login y no
+devuelve contraseñas, así que los usuarios de prueba están en el código y la sesión se guarda en
+`sessionStorage` (se borra al cerrar la pestaña). En un sistema real el back valida las credenciales y
+devuelve un token, y también controla los permisos en cada endpoint.
 
 ## Integrantes
 

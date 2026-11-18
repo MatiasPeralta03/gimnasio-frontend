@@ -36,8 +36,8 @@ export default function Inicio() {
           <Link className="boton" to="/clases">
             Ver clases
           </Link>
-          <Link className="boton secundario" to="/compra">
-            Comprar en el kiosco
+          <Link className="boton secundario" to="/ventas">
+            Registrar una venta
           </Link>
         </div>
       </section>
