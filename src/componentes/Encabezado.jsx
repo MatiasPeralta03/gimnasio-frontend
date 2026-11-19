@@ -59,8 +59,10 @@ export default function Encabezado({ sesion, onSalir }) {
             ))}
             {sesion ? (
               <li className="usuario-sesion">
-                <span>
-                  {sesion.usuario} ({nombreRol(sesion.rol)})
+                <span className="usuario-datos">
+                  <span className="solo-lectores">Sesión iniciada como </span>
+                  <strong>{sesion.usuario}</strong>
+                  <span className="rol">{nombreRol(sesion.rol)}</span>
                 </span>
                 <button type="button" className="boton-salir" onClick={salir}>
                   Cerrar sesión

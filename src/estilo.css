@@ -113,9 +113,14 @@ main:focus-visible { outline: none; }
     background: transparent; color: inherit; border: 2px solid currentColor; font-weight: 600;
 }
 .boton-menu:hover { background: rgba(0, 0, 0, 0.2); }
-/* Usuario logueado y boton para cerrar la sesion (dentro del menu) */
-.usuario-sesion { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.3rem 0.8rem; }
-.boton-salir { background: transparent; color: inherit; border: 2px solid currentColor; }
+/* Usuario logueado y boton para cerrar la sesion (dentro del menu, separado de los enlaces) */
+.usuario-sesion {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;
+    margin-top: 0.25rem; padding: 0.6rem 0.8rem 0.2rem; border-top: 1px solid currentColor;
+}
+.usuario-datos { display: flex; flex-direction: column; line-height: 1.2; }
+.usuario-datos .rol { font-size: 0.8rem; }
+.boton-salir { min-height: 2.25rem; padding: 0.3rem 0.8rem; background: transparent; color: inherit; border: 2px solid currentColor; }
 .boton-salir:hover { background: rgba(0, 0, 0, 0.2); border-color: currentColor; }
 .menu { width: 100%; }
 .menu[hidden] { display: none; }
@@ -274,12 +279,19 @@ dl dd { margin: 0; }
 
 /* ---------- Pantallas medianas y grandes ---------- */
 @media (min-width: 761px) {
-    .boton-menu { display: none; }
-    .menu, .menu[hidden] { display: block; width: auto; }
-    .menu ul { flex-direction: row; flex-wrap: wrap; }
     .campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .rejilla.tres { grid-template-columns: repeat(3, 1fr); }
     .rejilla.auto { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+}
+
+/* El menu completo entra en una linea recien desde 1200 px: antes se usa el boton "Menu"
+   (si no, en notebooks chicos el encabezado se partia en dos lineas). */
+@media (min-width: 1200px) {
+    .boton-menu { display: none; }
+    .menu, .menu[hidden] { display: block; width: auto; }
+    .menu ul { flex-direction: row; align-items: center; gap: 0.1rem; }
+    .menu a { padding: 0.5rem 0.6rem; }
+    .usuario-sesion { margin: 0 0 0 0.5rem; padding: 0 0 0 0.9rem; border-top: 0; border-left: 1px solid currentColor; }
 }
 
 @media print {
