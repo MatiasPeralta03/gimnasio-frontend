@@ -113,6 +113,10 @@ main:focus-visible { outline: none; }
     background: transparent; color: inherit; border: 2px solid currentColor; font-weight: 600;
 }
 .boton-menu:hover { background: rgba(0, 0, 0, 0.2); }
+/* Usuario logueado y boton para cerrar la sesion (dentro del menu) */
+.usuario-sesion { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 0.3rem 0.8rem; }
+.boton-salir { background: transparent; color: inherit; border: 2px solid currentColor; }
+.boton-salir:hover { background: rgba(0, 0, 0, 0.2); border-color: currentColor; }
 .menu { width: 100%; }
 .menu[hidden] { display: none; }
 .menu ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; }
@@ -130,6 +134,7 @@ section { margin-bottom: 2rem; }
     padding: 1.25rem; margin-bottom: 1.5rem; box-shadow: var(--sombra);
 }
 .panel > h2:first-child { margin-top: 0; }
+.login { max-width: 28rem; margin: 2rem auto; }
 
 .portada {
     background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio-grande);

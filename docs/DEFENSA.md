@@ -18,7 +18,7 @@ La evaluación es individual: cada uno tiene que poder explicar cualquier parte.
 | `Empleados.jsx` | Alta, detalle, edición y baja |
 | `Clases.jsx` | Alta, agenda con cupos y filtros, edición, cancelación, abre el modal de inscriptos |
 | `Productos.jsx` | Alta, catálogo con búsqueda, filtro de stock y orden, detalle, edición y borrado |
-| `Compra.jsx` | Flujo de compra en 3 pasos |
+| `Ventas.jsx` | Registrar una venta en 3 pasos y listado de ventas |
 | `Acerca.jsx`, `Politicas.jsx`, `NoEncontrada.jsx` | La compañía e integrantes, políticas, página 404 |
 | **componentes/** | Piezas reutilizables |
 | `Encabezado.jsx`, `Pie.jsx` | Menú (se pliega en celular) y pie con Políticas y Acerca de |
@@ -30,7 +30,7 @@ La evaluación es individual: cada uno tiene que poder explicar cualquier parte.
 | `Dialogo.jsx` | Ventana modal con `<dialog>` nativo |
 | `Tabla.jsx`, `Detalle.jsx` | Tabla accesible y lista de datos de un detalle |
 | `Mensaje.jsx`, `Estado.jsx` | Mensaje de éxito o error, y estados cargando / error / vacío |
-| `Ticket.jsx` | Comprobante de la compra |
+| `Ticket.jsx` | Comprobante de la venta |
 | **hooks/** | Lógica de estado reutilizable |
 | `useDatos.js` | Carga datos del back y da `datos`, `cargando`, `error` y `recargar` |
 | `useMensaje.js` | Mensaje de la página y `ejecutar()`: corre una acción, muestra el resultado y evita el doble envío |
@@ -38,7 +38,7 @@ La evaluación es individual: cada uno tiene que poder explicar cualquier parte.
 | **js/** | Lógica sin HTML |
 | `api.js` | El único lugar que hace `fetch`. Lee método y URL del formulario, manda JSON, traduce errores |
 | `socios.js`, `clases.js`, `productos.js`, `empleados.js` | Consultas, filtros y datos para mostrar de cada entidad |
-| `compra.js` | Formas de pago y si la venta queda pagada |
+| `ventas.js` | Listado de ventas, formas de pago y si la venta queda pagada |
 | `validaciones.js` | Patrones (DNI, teléfono, nombre...), topes y `validarFormulario()` |
 | `formatos.js` | Dinero y fechas en formato argentino, y conversión de fechas para el back |
 | `membresias.js` | Planes y medios de pago (datos fijos del negocio) |
@@ -52,8 +52,8 @@ Antes: MySQL y el back corriendo, `npm run dev`, y al menos un producto con stoc
 1. **Inicio:** el negocio, los planes y las próximas clases (vienen del back).
 2. **Socios:** intentar dar de alta un socio vacío → errores junto a cada campo. Cargarlo bien → mensaje de éxito.
 3. **Clases:** crear una clase con capacidad 1, inscribir al socio → "Sin cupo" y el botón Inscribir se deshabilita.
-4. **Comprar:** elegir un producto, poner más cantidad que el stock → error. Comprar 1 "a la cuenta del socio" →
-   comprobante. Ir a **Socios**: aparece la deuda. **Pagar deuda** → desaparece.
+4. **Ventas:** cargar un producto con más cantidad que el stock → error. Registrar 1 "a la cuenta del socio" →
+   comprobante y aparece en "Ventas registradas". Ir a **Socios**: aparece la deuda. **Pagar deuda** → desaparece.
 5. **Pie de página → Políticas:** el enlace externo se abre en otra pestaña.
 6. **Responsive:** achicar la ventana: el menú se pliega y las tablas pasan a tarjetas.
 7. **Errores:** frenar el back y recargar → "No se pudo conectar" y **Reintentar**.
@@ -68,18 +68,18 @@ Antes: MySQL y el back corriendo, `npm run dev`, y al menos un producto con stoc
 | ¿Cómo arranca la app? | `index.html` → `main.jsx` → `App.jsx` → la página de la ruta | `index.html`, `main.jsx` |
 | ¿Qué es JSX? | Sintaxis parecida a HTML dentro de JavaScript. Vite la transforma a JS común. Entre `{ }` va JavaScript | cualquier página |
 | ¿Qué es el Virtual DOM? | Una copia en memoria del DOM. Cuando cambia el estado, React compara y modifica en el DOM real solo lo que cambió | — |
-| ¿Declarativo o imperativo? | Declarativo: describimos cómo se ve la pantalla según el estado (`{paso === 2 && ...}`), no paso a paso cómo tocar el DOM | `Compra.jsx` |
+| ¿Declarativo o imperativo? | Declarativo: describimos cómo se ve la pantalla según el estado (`{paso === 2 && ...}`), no paso a paso cómo tocar el DOM | `Ventas.jsx` |
 | ¿Qué es un componente? ¿Por qué con mayúscula? | Una función que devuelve JSX. Va en PascalCase para que React no lo confunda con una etiqueta HTML | `Campo.jsx` |
 | ¿Qué son las props? | Datos que el padre le pasa al hijo; el hijo no los puede modificar. `children` es lo que va entre las etiquetas | `Dialogo.jsx` recibe `titulo` y `children` |
-| ¿Qué es `useState`? | Guarda un dato que cambia; al cambiarlo con su `set...`, React vuelve a dibujar el componente | `Compra.jsx`: `cantidad`, `socioId`, `pago` |
+| ¿Qué es `useState`? | Guarda un dato que cambia; al cambiarlo con su `set...`, React vuelve a dibujar el componente | `Ventas.jsx`: `cantidad`, `socioId`, `pago` |
 | ¿Qué es `useEffect`? | Ejecuta código después de dibujar, por ejemplo pedir datos al back al abrir la página | `useDatos.js` |
 | ¿Qué es `useRef`? | Guarda un valor o un elemento sin volver a dibujar al cambiarlo | `Dialogo.jsx` (el `<dialog>`), `useMensaje.js` (evitar doble envío) |
 | ¿Para qué `useCallback`? | Mantiene la misma función entre renders. Sin eso, el `useEffect` que depende de ella se repetiría sin fin | `useDatos.js` |
 | ¿Para qué `useId`? | Genera un id único para conectar el título del modal con `aria-labelledby` | `Dialogo.jsx` |
 | ¿Qué es un hook propio? | Una función `use...` que junta otros hooks para reutilizarlos. Evita repetir la carga de datos en cada página | `hooks/` |
-| ¿Renderizado condicional? | Mostrar una cosa u otra según una condición, con `&&` o `? :` | `Estado.jsx`, `Compra.jsx` |
+| ¿Renderizado condicional? | Mostrar una cosa u otra según una condición, con `&&` o `? :` | `Estado.jsx`, `Ventas.jsx` |
 | ¿Para qué es `key` en las listas? | Para que React identifique cada elemento y actualice solo el que cambió. Usamos el id del back | cualquier `.map()` |
-| ¿Campo controlado o no controlado? | Controlado: el valor vive en el estado (`value` + `onChange`), para la compra, donde el total se recalcula al escribir. No controlado (`defaultValue`): en las altas, los datos se leen recién al enviar | `Compra.jsx` y `Socios.jsx` |
+| ¿Campo controlado o no controlado? | Controlado: el valor vive en el estado (`value` + `onChange`), para la compra, donde el total se recalcula al escribir. No controlado (`defaultValue`): en las altas, los datos se leen recién al enviar | `Ventas.jsx` y `Socios.jsx` |
 | ¿Por qué `key={editando.id}` en el form de edición? | Para que al editar otro registro React cree un formulario nuevo con los valores correctos | `Socios.jsx` |
 | ¿Qué es una SPA? ¿Cómo navega? | Una sola página HTML cuyo contenido cambia sin recargar. React Router muestra el componente de cada URL; `NavLink` marca la página actual | `App.jsx`, `Encabezado.jsx` |
 | ¿Qué hace `StrictMode`? | Solo en desarrollo, ejecuta algunas cosas dos veces para detectar errores. No afecta a la versión final | `main.jsx` |
