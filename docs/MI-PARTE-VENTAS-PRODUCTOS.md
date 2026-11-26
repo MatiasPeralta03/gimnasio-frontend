@@ -4,9 +4,13 @@ El código se dividió entre los tres. Este resumen tiene **solo lo que necesito
 
 - **Parte A (la sabemos todos):** cómo arranca la app (`index.html`, `main.jsx`, `App.jsx`), los **hooks de React** (los
   que vienen con la librería), nuestros **hooks propios**, cómo se habla con el back y el login.
-- **Parte B:** la pantalla **Productos**, completa, con el back que la atiende.
-- **Parte C:** la pantalla **Ventas**, completa, con el back que la atiende.
-- **Parte D:** preguntas probables, limitaciones y cambios en vivo de mi parte.
+- **Parte B:** la pantalla **Productos**, completa.
+- **Parte C:** la pantalla **Ventas**, completa.
+- **Parte D:** lo de `js/` y los componentes que usan mis pantallas (formatos, validaciones, Campo, Tabla...).
+- **Parte E:** preguntas probables, limitaciones y cambios en vivo de mi parte.
+
+La defensa es **solo del front**: acá no hay código del back. Donde mis pantallas dependen de lo que responde el back
+(por ejemplo, el error "Stock insuficiente"), está explicado desde el lado del front.
 
 Las líneas son de la versión actual de la rama `matiFront`. En VS Code: **Ctrl + P** abre un archivo por nombre y
 **Ctrl + G** va a un número de línea. Para la explicación de todos los archivos del proyecto, ver
@@ -33,8 +37,6 @@ Las líneas son de la versión actual de la rama `matiFront`. En VS Code: **Ctrl
 | `src/js/validaciones.js` | ✅ | ✅ | Patrón de texto, topes de precio y stock, `validarFormulario` |
 | `src/js/formatos.js` | ✅ | ✅ | Precio en pesos y fecha argentina |
 | `src/estilo.css` (pasos, ticket, impresión, tablas) | ✅ | ✅ | Cómo se ve |
-| **Back:** `ProductoController`, `ProductoService`, `Producto` | ✅ | | Lo que pasa en Java al llamar a `/api/productos` |
-| **Back:** `VentaController`, `VentaService`, `Venta`, `VentaRequest`, `VentaResponse` | | ✅ | Lo que pasa en Java al llamar a `/api/ventas` |
 
 ---
 
@@ -236,7 +238,7 @@ export function enviar(form, datos = datosDe(form)) {
   HTML solo admite GET y POST, por eso PUT y DELETE van en `data-metodo`.
 - `datosDe(form)` arma el objeto con los campos que tienen `name`: los números van como número y a los textos se les
   sacan los espacios de los extremos. **El `name` del campo es la clave del JSON** y tiene que coincidir con el atributo
-  de la clase Java (`name="precio"` → `producto.precio`).
+  que espera el back (`name="precio"` → `"precio": 800`).
 - `obtener(url)` hace un GET simple (listar, ver detalle).
 - `pedir(...)` hace el `fetch`:
   - Sin conexión → "No se pudo conectar con el servidor".
@@ -352,7 +354,8 @@ function borrar(e, producto) {
 ```
 
 `window.confirm` muestra la pregunta nativa del navegador. El form de la fila (línea 174) tiene
-`data-metodo="DELETE"`. **En el back es una baja lógica** (ver B7).
+`data-metodo="DELETE"`. Es una **baja lógica**: el producto deja de aparecer en el catálogo, pero no se borra de la
+base (las ventas viejas lo siguen nombrando).
 
 **Ver detalle (líneas 101–107):** `obtenerProducto(id)` → `GET /api/productos/{id}` → guarda el resultado en `detalle`,
 y eso abre el modal.
@@ -407,46 +410,14 @@ export const hayStock = (producto) => producto.stock > 0;
 - `datosDetalleProducto(p)` arma los pares `[título, valor]` que muestra el modal de detalle.
 - **`listarProductos` y `hayStock` también los usa Ventas.**
 
-## B7. El back de Productos (Java)
-
-**`ProductoController`** (capa de comunicación HTTP):
-
-```java
-@GetMapping
-public List<Producto> listar(@RequestParam(defaultValue = "false") boolean soloDisponibles) {
-    return soloDisponibles ? productoService.listarDisponibles() : productoService.listar();
-}
-@GetMapping("/{id}")       public Producto obtener(@PathVariable Long id)
-@PostMapping  @ResponseStatus(HttpStatus.CREATED)      public Producto crear(@RequestBody Producto producto)
-@PutMapping("/{id}")       public Producto actualizar(@PathVariable Long id, @RequestBody Producto producto)
-@DeleteMapping("/{id}") @ResponseStatus(HttpStatus.NO_CONTENT)   public void eliminar(@PathVariable Long id)
-```
-
-- `@RequestParam`: lee `?soloDisponibles=true` de la URL. `@PathVariable`: lee el `{id}`.
-- `@RequestBody`: convierte el JSON que manda el front en un objeto `Producto`.
-- `201 CREATED` al crear, `204 NO_CONTENT` al borrar (por eso `api.js` trata el 204 aparte).
-
-**`ProductoService`** (lógica de negocio):
-- `listarDisponibles()` → `productoRepository.findByActivoTrue()`: un **query method**. Spring arma el SQL solo a partir
-  del nombre del método.
-- `crear`: pone `activo = true` y stock 0 si no viene.
-- `actualizar`: cambia nombre, precio y stock.
-- **`eliminar`: baja lógica.** No borra la fila: pone `activo = false`. **¿Por qué?** Porque las ventas viejas apuntan a
-  ese producto (clave foránea): si se borrara, se perdería el historial. Por eso desaparece del catálogo pero sigue en
-  la base.
-
-**`Producto`** (entidad, tabla `productos`): `id`, `nombre`, `precio` (Double), `stock` (Integer) y `activo`. Usa
-`@Entity`, `@Id` con `@GeneratedValue` (autoincremental) y `@Column(nullable = false)`.
-
-## B8. De punta a punta: dar de alta un producto
+## B7. De punta a punta: dar de alta un producto
 
 ```
 Clic en "Agregar producto"
  → alta(e): preventDefault + validarFormulario
  → ejecutar(() => enviar(form))
  → api.js: POST /api/productos  { "nombre": "Agua", "precio": 800, "stock": 20 }
- → proxy de Vite → ProductoController.crear → ProductoService.crear → ProductoRepository.save → MySQL
- → 201 + el producto creado (con id)
+ → el back lo guarda y responde 201 con el producto creado (con su id)
  → "Producto agregado." + form.reset() + recargar() → GET /api/productos → la tabla se actualiza
 ```
 
@@ -536,7 +507,7 @@ async function confirmar(e) {
 
 1. Valida que haya un socio elegido.
 2. `setProcesando(true)`: deshabilita los botones y muestra "Procesando...". Así un doble clic no registra dos ventas.
-3. **Arma el JSON a mano** (`datosVenta`) con exactamente lo que espera Java (`VentaRequest`), y lo manda con
+3. **Arma el JSON a mano** (`datosVenta`) con exactamente los nombres que espera el back, y lo manda con
    `enviar(form, datosVenta)`. El método (`POST`) y la URL (`/api/ventas`) salen del form.
 4. `pagada: estaPagada(pago)`: el back no recibe la forma de pago, solo si la venta quedó **pagada**. "Anotar en la
    cuenta del socio" → `false` → el back suma el monto a la deuda.
@@ -620,84 +591,241 @@ socio".
 CSS** (`counter-increment` y `content: counter(paso)`, que pone los números 1, 2, 3) y resalta el
 `[aria-current="step"]`. `.ticket` usa una fuente monoespaciada y borde punteado, como un ticket de caja.
 
-## C7. El back de Ventas (Java)
-
-**`VentaController`:**
-
-```java
-@PostMapping
-@ResponseStatus(HttpStatus.CREATED)
-public VentaResponse registrar(@RequestBody VentaRequest request) {
-    return ventaService.registrar(request);
-}
-
-@GetMapping
-public List<VentaResponse> listar(@RequestParam(required = false) Long socioId) { ... }
-```
-
-Solo `POST` y `GET`: **no hay PUT ni DELETE porque una venta es un registro histórico** (inmutable).
-
-**DTOs (Data Transfer Objects):**
-- `VentaRequest` (lo que **entra**): `socioId`, `productoId`, `cantidad`, `pagada`. Son los mismos nombres que
-  `datosVenta` en el front.
-- `VentaResponse` (lo que **sale**): `id`, `socioId`, `socioNombre`, `productoId`, `productoNombre`, `cantidad`,
-  `montoTotal`, `fechaHora`, `pagada`.
-
-**¿Por qué DTOs y no la entidad?** La entidad `Venta` tiene relaciones (`@ManyToOne` con `Socio` y `Producto`). El DTO
-de entrada recibe solo los ids, y el de salida "aplana" la relación (manda `socioNombre` en vez del socio entero).
-Así el JSON es simple y no se exponen datos de más.
-
-**`VentaService.registrar()`**: la lógica de negocio. La clase tiene `@Transactional`:
-
-```java
-Socio socio = socioRepository.findById(req.getSocioId())
-        .orElseThrow(() -> new RecursoNoEncontradoException("No existe el socio con id " + ...));   // 404
-Producto producto = productoRepository.findById(req.getProductoId()).orElseThrow(...);              // 404
-
-if (!socio.getActivo())          throw new ReglaDeNegocioException("El socio esta dado de baja");    // 409
-if (!producto.getActivo())       throw new ReglaDeNegocioException("El producto no esta disponible");
-if (cantidad <= 0)               throw new ReglaDeNegocioException("La cantidad tiene que ser mayor a 0");
-if (producto.getStock() < cantidad)
-    throw new ReglaDeNegocioException("Stock insuficiente (hay " + producto.getStock() + ")");
-
-double montoTotal = producto.getPrecio() * cantidad;
-producto.setStock(producto.getStock() - cantidad);         // descuenta el stock
-if (!pagada) socio.setDeuda(socio.getDeuda() + montoTotal); // si no se pagó, va a la deuda
-... guarda la Venta con LocalDateTime.now() y devuelve new VentaResponse(...)
-```
-
-- **Las reglas de negocio están en el back.** Aunque el front ya limita la cantidad al stock, el back lo vuelve a
-  controlar: alguien podría llamar a la API desde Postman, o el stock pudo cambiar mientras tanto.
-- **El precio lo calcula el back** (`producto.getPrecio() * cantidad`), no el front. El total del front es solo para
-  mostrar.
-- **`@Transactional`:** todo el método es **una transacción**. Si algo falla en el medio, se deshace todo: no puede
-  quedar el stock descontado sin la venta registrada.
-- **Excepciones → códigos HTTP:** `ManejadorGlobalDeErrores` (`@RestControllerAdvice`) convierte
-  `RecursoNoEncontradoException` en **404** y `ReglaDeNegocioException` en **409**, con un `ProblemDetail` cuyo `detail`
-  es el mensaje. Ese `detail` es el que muestra el front.
-
-**`Venta`** (entidad, tabla `ventas`): `@ManyToOne` con `Socio` y con `Producto` (columnas `socio_id` y
-`producto_id`, claves foráneas), `cantidad`, `montoTotal`, `fechaHora` y `pagada`.
-
-## C8. De punta a punta: registrar una venta a cuenta
+## C7. De punta a punta: registrar una venta a cuenta
 
 ```
 Paso 1: elegir "Agua" y cantidad 2 → cargarProducto: valida → cargado = true → paso 2
 Paso 2: elegir socio y "Anotar en la cuenta" → "Registrar venta"
  → confirmar: valida → procesando = true
  → api.js: POST /api/ventas  { "socioId": 2, "productoId": 4, "cantidad": 2, "pagada": false }
- → VentaController → VentaService.registrar (@Transactional):
-     valida socio, producto y stock → stock 8 → 6 → deuda del socio + $300 → guarda la Venta
- → 201 + VentaResponse (id, fecha, monto...)
+ → el back valida, descuenta el stock (8 → 6), suma $300 a la deuda del socio y guarda la venta
+ → responde 201 con la venta (id, fecha, monto...)
  → setVenta(...) → paso 3: Ticket ("quedó anotado en la cuenta del socio")
  → ventas.recargar() (el listado) + recargar() (el stock)
 ```
 
 ---
 
-# Parte D. Para la defensa
+# Parte D. Lo de `js/` y los componentes que usan mis pantallas
 
-## D1. Preguntas probables de mi parte
+## D1. `src/js/formatos.js`: precios y fechas
+
+```js
+const moneda = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
+export const formatoPrecio = (valor) => moneda.format(Number(valor) || 0);
+```
+
+- `Intl.NumberFormat` es nativo del navegador: `1500.5` → `$ 1.500,50` (formato argentino).
+- `Number(valor) || 0`: si el valor no es un número, muestra `$ 0,00` en vez de "NaN".
+- **Dónde lo uso:** el precio en la tabla de Productos, el precio y el stock en el desplegable de Ventas, el subtotal y
+  el total, el monto del ticket y el del listado de ventas, y el mensaje de error del precio máximo.
+
+```js
+export function aFecha(valor) {
+  const texto = String(valor);
+  return new Date(texto.length === 10 ? texto + "T00:00:00" : texto.slice(0, 19));
+}
+```
+
+- Convierte la fecha que manda el back (`"2026-11-20T18:00:00.123"`) en un `Date` de JavaScript.
+- **Arregla un error real:** una fecha sin hora (`"2026-10-08"`) se interpretaba en hora UTC, y en Argentina (UTC−3)
+  eso es el día anterior a las 21 hs: se mostraba **un día antes**. Con `T00:00:00` se toma como hora local.
+- `.slice(0, 19)` corta los decimales de los segundos, que no todos los navegadores aceptan.
+
+```js
+export function formatoFechaHora(valor) {
+  if (!valor) return "-";
+  return aFecha(valor).toLocaleString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric",
+                                                 hour: "2-digit", minute: "2-digit", hour12: false });
+}
+```
+
+- Da `20/11/2026, 18:00`: año con 4 dígitos y 24 horas.
+- **Dónde lo uso:** la fecha del ticket y la columna "Fecha" del listado de ventas.
+
+## D2. `src/js/validaciones.js`: lo que usan mis formularios
+
+```js
+export const PATRON_TEXTO = "\\s*\\S.*";
+export const PRECIO_MAXIMO = 10000000;
+export const STOCK_MAXIMO = 100000;
+
+export function validarFormulario(form) {
+  const valido = form.checkValidity();
+  if (!valido) form.querySelector("input:invalid, select:invalid, textarea:invalid")?.focus();
+  return valido;
+}
+```
+
+- `PATRON_TEXTO`: expresión regular para el `pattern` del nombre del producto. Exige al menos un carácter que no sea
+  espacio, así "   " no pasa. (La doble barra `\\` es porque dentro de un texto de JavaScript `\\` vale una sola `\`.)
+- `PRECIO_MAXIMO` y `STOCK_MAXIMO`: topes para que no entren valores absurdos, como un precio de un billón.
+- **`validarFormulario(form)`:** lo llaman `alta` y `modificar` (Productos) y `cargarProducto` y `confirmar` (Ventas).
+  1. `form.checkValidity()` es **nativo del navegador**: revisa todos los `required`, `min`, `max`, `pattern`...
+  2. En cada campo que no cumple, el navegador dispara el evento **`invalid`**. Ese evento lo atrapa `Campo` para
+     mostrar el mensaje debajo del campo (ver D4).
+  3. Si hay errores, pone el foco en el primero, así el usuario sabe dónde corregir.
+  4. Devuelve `true` o `false`. Si es `false`, la función de la página corta con `return` y no se envía nada.
+
+## D3. `src/js/socios.js`: lo único que usa Ventas
+
+```js
+export async function listarSociosActivos() {
+  const socios = await listarSocios();
+  return socios.filter((s) => s.activo);
+}
+```
+
+Pide los socios (`GET /api/socios`) y deja **solo los activos**: a un socio dado de baja no se le puede vender. Llena
+el desplegable "Socio" del paso 2. Es `async` porque tiene que **esperar** (`await`) la respuesta del back antes de
+filtrar.
+
+## D4. Los componentes que usan mis pantallas
+
+**`Campo.jsx`: el campo de formulario con su error** (lo usan todos los campos de Productos y de Ventas):
+
+```jsx
+export default function Campo({ id, etiqueta, ayuda, as: Control = "input", children, ...props }) {
+  const [error, setError] = useState("");
+
+  const alInvalido = (e) => {
+    e.preventDefault();               // sin el globo del navegador
+    const campo = e.target;
+    setError(campo.validity.customError ? campo.validationMessage : campo.dataset.mensajeError || campo.validationMessage);
+    props.onInvalid?.(e);
+  };
+
+  const alEscribir = (e) => {
+    if (error) setError("");          // al corregir, el error desaparece
+    props.onInput?.(e);
+  };
+  ...
+  <label htmlFor={id}>{etiqueta}{props.required && <span aria-hidden="true"> *</span>}</label>
+  <Control id={id} {...props} onInvalid={alInvalido} onInput={alEscribir}
+           aria-invalid={error ? "true" : undefined} aria-describedby={describedBy}>
+    {children}
+  </Control>
+  <small id={id + "-error"} className="error-campo" role="alert">{error}</small>
+```
+
+- **Props:** `id`, `etiqueta`, `ayuda` y `as` (para elegir `input` o `select`). `...props` junta **todo lo demás**
+  (`name`, `type`, `required`, `min`, `pattern`, `value`, `onChange`...) y se lo pasa tal cual al campo real.
+- `as: Control = "input"`: renombra la prop `as` a `Control`, con mayúscula, para poder usarla como etiqueta. Por eso
+  `<Campo as="select">` dibuja un `<select>` (el desplegable de productos y el de socios en Ventas).
+- **Cómo aparece el error:** `validarFormulario` → el navegador dispara `invalid` → `alInvalido` guarda el texto de
+  `data-mensaje-error` → se dibuja en el `<small>` de abajo. Al escribir, `alEscribir` lo borra.
+- **Accesibilidad:** `label htmlFor` une la etiqueta con el campo (en JSX es `htmlFor` porque `for` es palabra reservada
+  de JavaScript), `aria-describedby` hace que el lector lea el error junto al campo, `aria-invalid` lo marca en rojo y
+  `role="alert"` lo anuncia apenas aparece.
+
+**`Tabla.jsx`: la tabla del catálogo y la del listado de ventas**
+
+```jsx
+<table className="tabla-datos">
+  <caption>{titulo}</caption>
+  <thead><tr>{columnas.map((c) => <th key={c} scope="col">{c}</th>)}</tr></thead>
+  <tbody>{children}</tbody>
+</table>
+```
+
+- Recibe el `titulo` (el `<caption>`, que lee el lector de pantalla), las `columnas` y las filas como `children`.
+- `scope="col"` indica que cada `<th>` encabeza su columna.
+- Cada `<td>` de mis filas lleva `data-label` ("Precio", "Stock"...): en el celular el CSS convierte cada fila en una
+  tarjeta y muestra ese nombre antes del dato.
+
+**`Estado.jsx`: cargando / error / vacío**
+
+```jsx
+if (cargando) return <p className="estado" role="status">Cargando...</p>;
+if (error) return (<div className="estado error" role="alert"><p>{error}</p>
+                   {recargar && <button ... onClick={recargar}>Reintentar</button>}</div>);
+if (vacio) return <p className="estado">{textoVacio}</p>;
+return children;
+```
+
+**Renderizado condicional** con `if` y `return`. Envuelve la tabla de Productos, el paso 1 y el paso 2 de Ventas y el
+listado de ventas. Si el back está apagado, se ve el error con **Reintentar**, que vuelve a llamar a `recargar` de
+`useDatos`.
+
+**`Mensaje.jsx`: el mensaje verde o rojo**
+
+```jsx
+<div className="zona-mensaje" aria-live="polite" aria-atomic="true">
+  {mensaje.texto && <p className={"mensaje" + (mensaje.error ? " error" : "")}>{mensaje.texto}</p>}
+</div>
+```
+
+- Dibuja el `mensaje` de `useMensaje`. `mensaje.texto && ...`: si no hay texto, no muestra nada.
+- El `div` con `aria-live` existe siempre, para que el lector de pantalla anuncie el texto cuando aparece.
+- `zona-mensaje` es `sticky` en el CSS: el mensaje sigue visible aunque hayas bajado por la tabla.
+
+**`Dialogo.jsx`: los modales de Productos** (detalle y edición)
+
+```jsx
+export default function Dialogo({ abierto, onCerrar, titulo, grande = false, children }) {
+  const ref = useRef(null);
+  const idTitulo = useId();
+
+  useEffect(() => {
+    const d = ref.current;
+    if (abierto && !d.open) d.showModal();
+    if (!abierto && d.open) d.close();
+  }, [abierto]);
+
+  return (
+    <dialog ref={ref} onClose={onCerrar} aria-labelledby={idTitulo} ...>
+      <h2 id={idTitulo}>{titulo}</h2>
+      {children}
+    </dialog>
+  );
+}
+```
+
+- Usa el `<dialog>` **nativo** del HTML: el navegador ya resuelve el fondo oscuro, el foco atrapado adentro, cerrar con
+  **Escape** y devolver el foco al botón que lo abrió.
+- `useRef` guarda el `<dialog>` real para llamar a `showModal()` y `close()`. `useEffect` lo abre o cierra cuando cambia
+  la prop `abierto`.
+- `onClose={onCerrar}`: si se cierra con Escape, avisa a Productos (`setEditando(null)`).
+- **`children`:** lo que Productos pone adentro: el `<Detalle>` o el form de edición. Un solo componente sirve para los
+  dos modales.
+
+**`Detalle.jsx`: la lista del modal de detalle**
+
+```jsx
+<dl>
+  {datos.map(([titulo, valor]) => (
+    <div key={titulo}><dt>{titulo}</dt><dd>{valor ?? "-"}</dd></div>
+  ))}
+</dl>
+```
+
+Recibe pares `[título, valor]` (los arma `datosDetalleProducto`) y los muestra como **lista de definición**
+(`<dl>`, `<dt>`, `<dd>`), la etiqueta semántica para "dato: valor". `valor ?? "-"`: si no hay valor, muestra "-".
+
+**`Ticket.jsx`:** explicado en C6.
+
+## D5. JavaScript que aparece en mi parte
+
+| Qué | Significa | Ejemplo en mi código |
+|---|---|---|
+| `{ datos: productos } = ...` | Destructuring con renombre | `useDatos(listarProductos)` en Productos |
+| `[valor, setValor] = useState(...)` | Destructuring de una lista | `const [cantidad, setCantidad] = useState("1")` |
+| `{ ...filtro, texto: "x" }` | Spread: copia el objeto y pisa una propiedad | Los filtros de Productos |
+| `[...ventas].sort(...)` | Copia la lista antes de ordenarla | `ordenarPorFecha` |
+| `producto?.stock` | Optional chaining: no falla si `producto` es `undefined` | `max={producto?.stock}` en Ventas |
+| `a ?? b` | Si `a` es `null` o `undefined`, usa `b` | `?.pagada ?? true` en `estaPagada` |
+| `cond ? a : b` | If/else en una línea | `hayStock(p) ? p.stock + " unidades" : "Agotado"` |
+| `cond && <X />` | Muestra X solo si `cond` es verdadera | `{editando && (<form ...>)}` |
+| `.filter` / `.find` / `.map` / `.sort` | Filtrar, buscar uno, transformar, ordenar listas | `datos.filter(hayStock)`, `productos.find(...)` |
+| `async` / `await` | Esperar una respuesta (como `fetch`) sin congelar la página | `confirmar` en Ventas |
+| `try / catch / finally` | Intentar; si falla, atrapar; y al final, siempre | `confirmar` en Ventas |
+| `e.preventDefault()` | Cancela lo que el navegador haría solo (recargar al enviar un form) | `alta`, `confirmar`... |
+
+---
+
+# Parte E. Para la defensa
+
+## E1. Preguntas probables de mi parte
 
 | Pregunta | Respuesta |
 |---|---|
@@ -709,30 +837,30 @@ Paso 2: elegir socio y "Anotar en la cuenta" → "Registrar venta"
 | ¿Para qué el `key={editando.id}`? | Para que React arme un formulario nuevo al editar otro producto, con sus valores |
 | ¿Por qué se muestra el mensaje dentro del modal? | Si falla el guardado, el error tiene que verse ahí, no detrás del modal |
 | ¿Qué validaciones tiene un producto? | Nombre de 2 a 100 caracteres que no sea solo espacios; precio entre $0,01 y $10.000.000; stock entero entre 0 y 100.000 |
-| ¿Cómo es el flujo de una venta? | Producto y cantidad → socio y forma de pago → un `POST /api/ventas` → comprobante (C8) |
-| ¿Por qué un producto por venta? | Porque en el back `Venta` tiene un producto. Así cada venta es atómica |
-| ¿Qué hace el back al registrar una venta? | Valida socio, producto y stock, calcula el monto, descuenta el stock, suma la deuda si no se pagó y guarda, todo en una transacción |
-| ¿Por qué el back vuelve a validar el stock? | Porque la validación del front se puede saltear (Postman) y el stock puede cambiar entre que elegís y confirmás |
+| ¿Cómo es el flujo de una venta? | Producto y cantidad → socio y forma de pago → un `POST /api/ventas` → comprobante (C7) |
+| ¿Por qué un producto por venta? | Porque cada venta que guarda el back es de un producto. Con un carrito serían varios POST y, si fallaba uno, los anteriores ya quedaban vendidos. Así cada venta se registra completa o no se registra |
+| ¿Alcanza con que el front limite la cantidad al stock? | No: la validación del front se puede saltear y el stock puede cambiar entre que elegís y confirmás. Si el back rechaza la venta, el front muestra su mensaje ("Stock insuficiente") y recarga el stock |
 | ¿Quién calcula el total? | Los dos: el front para mostrarlo mientras escribís, y el back el que se guarda (`precio * cantidad`) |
 | ¿Por qué el ticket usa los datos del back? | Para que muestre lo que realmente quedó guardado: el número de venta, la fecha y el monto reales |
+| ¿Qué es `formatoPrecio`? ¿Y por qué `aFecha`? | `formatoPrecio` usa `Intl.NumberFormat` para mostrar `$ 1.500,50`. `aFecha` arregla que una fecha sin hora se mostraba un día antes (UTC contra hora local) |
+| ¿Dónde se valida un formulario? | En los atributos de cada `<Campo>` (`required`, `min`, `max`, `pattern`). `validarFormulario` llama a `checkValidity()` antes de enviar y `Campo` muestra el error |
 | ¿Cómo funciona imprimir? | `window.print()` y `@media print`, que oculta todo lo que no es el ticket |
-| ¿Por qué la forma de pago no está en el listado de ventas? | Porque el back solo guarda si quedó pagada o no. La forma de pago se muestra en el ticket |
+| ¿Por qué el listado dice "Pagada" o "A cuenta" y no la forma de pago? | Porque al back solo se le manda si quedó pagada (`estaPagada`). La forma de pago se muestra en el ticket |
 | ¿Por qué `String(p.id) === productoId`? | Porque un `<select>` devuelve el valor como texto y el id es número |
 | ¿Qué evita el doble clic? | En Ventas, `procesando` deshabilita el botón. En Productos, `useMensaje` ignora el segundo clic con `useRef` |
 | ¿Qué es `async/await`? ¿No era mejor `defer`? | Son cosas distintas: `defer` es para cargar un script en el HTML; `async/await` es para esperar la respuesta del back sin congelar la página. El profe también lo usa |
-| ¿Por qué hay DTOs en Venta y no en Producto? | `Producto` no tiene relaciones, así que se manda la entidad directa. `Venta` tiene `@ManyToOne`: los DTOs reciben ids y aplanan la respuesta |
 
-## D2. Limitaciones de mi parte (decirlas antes de que las encuentren)
+## E2. Limitaciones de mi parte (decirlas antes de que las encuentren)
 
 | Limitación | Cómo se resolvería |
 |---|---|
-| El back acepta un producto con nombre vacío o precio negativo si alguien llama a la API directo (el front lo bloquea) | `@Valid` con `@NotBlank` y `@Positive` en el back |
-| Una venta es de un solo producto | Una entidad de detalle (`DetalleVenta`) para que un POST registre varios productos en una transacción |
-| El back no guarda la forma de pago, solo si quedó pagada | Agregar el campo a `Venta` |
-| El listado de ventas no tiene paginación ni filtros | `Pageable` en el back y filtros en la tabla |
-| El login es simulado y la API no está protegida | Login real en el back con token, y proteger los endpoints |
+| Una venta es de un solo producto | Un carrito que mande todos los productos juntos (necesita un cambio en el back) |
+| El listado de ventas no tiene filtros ni paginación | Filtros por socio o por fecha en el navegador, como los de Productos |
+| El listado no muestra la forma de pago, solo "Pagada" o "A cuenta" | Que el back también la guarde |
+| Las validaciones del front se pueden saltear llamando a la API directo | Es normal: el front ayuda al usuario y el back tiene que volver a validar |
+| El login es simulado en el front (los usuarios de prueba están en el código) | Un login real, validado por el back |
 
-## D3. Si piden un cambio en vivo
+## E3. Si piden un cambio en vivo
 
 | Te pueden pedir | Qué tocar |
 |---|---|
