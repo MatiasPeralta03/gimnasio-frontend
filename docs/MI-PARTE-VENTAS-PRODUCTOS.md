@@ -728,7 +728,7 @@ function borrar(e, producto) {
 | Elegir en **"Producto"** | 115–130 | `setProductoId(e.target.value)` (121) | Nada | Se calcula el subtotal y se fija el máximo de la cantidad |
 | Escribir en **"Cantidad"** | 131–142 | `setCantidad(e.target.value)` (140) | Nada | El subtotal se recalcula al instante |
 | **"Continuar"** | Botón: 148. Form: 113 (`onSubmit={cargarProducto}`) | `cargarProducto` (50) | Nada | Si el producto y la cantidad son válidos, pasa al paso 2 |
-| Elegir en **"Socio"** | 170–184 | `setSocioId(e.target.value)` (176) | Nada | Queda elegido el socio |
+| Elegir en **"Socio"** | 170–185 | `setSocioId(e.target.value)` (176) | Nada | Queda elegido el socio |
 | Elegir una **forma de pago** | 191 | `setPago(f.valor)` | Nada | Queda marcada la forma de pago |
 | **"Volver"** | 201 | `setCargado(false)` | Nada | Vuelve al paso 1 **conservando** el producto y la cantidad |
 | **"Registrar venta"** | Botón: 204. Form: 169 (`onSubmit={confirmar}`) | `confirmar` (68) | `POST /api/ventas` | "Procesando..." → paso 3 con el ticket. La venta aparece en el listado y el stock baja |
