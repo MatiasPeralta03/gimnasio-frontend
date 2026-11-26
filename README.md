@@ -9,6 +9,7 @@ que consume la API REST del back-end en Spring Boot, que está en otro repositor
 - Paso a paso para entender el código: [docs/PASO-A-PASO.md](docs/PASO-A-PASO.md).
 - Qué hace cada archivo, con su código importante: [docs/ARCHIVOS.md](docs/ARCHIVOS.md).
 - Lo que ves en pantalla → dónde está en el código: [docs/PANTALLAS.md](docs/PANTALLAS.md).
+- Resumen de mi parte (Productos y Ventas) con lo común a todos: [docs/MI-PARTE-VENTAS-PRODUCTOS.md](docs/MI-PARTE-VENTAS-PRODUCTOS.md).
 
 ## Cómo levantarlo
 
