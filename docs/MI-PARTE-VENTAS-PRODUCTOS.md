@@ -6,8 +6,9 @@ El código se dividió entre los tres. Este resumen tiene **solo lo que necesito
   que vienen con la librería), nuestros **hooks propios**, cómo se habla con el back y el login.
 - **Parte B:** la pantalla **Productos**, completa.
 - **Parte C:** la pantalla **Ventas**, completa.
-- **Parte D:** lo de `js/` y los componentes que usan mis pantallas (formatos, validaciones, Campo, Tabla...).
-- **Parte E:** preguntas probables, limitaciones y cambios en vivo de mi parte.
+- **Parte D:** **botón por botón**: qué toco en la pantalla, dónde está en el código y qué pasa.
+- **Parte E:** lo de `js/` y los componentes que usan mis pantallas (formatos, validaciones, Campo, Tabla...).
+- **Parte F:** preguntas probables, limitaciones y cambios en vivo de mi parte.
 
 La defensa es **solo del front**: acá no hay código del back. Donde mis pantallas dependen de lo que responde el back
 (por ejemplo, el error "Stock insuficiente"), está explicado desde el lado del front.
@@ -606,9 +607,181 @@ Paso 2: elegir socio y "Anotar en la cuenta" → "Registrar venta"
 
 ---
 
-# Parte D. Lo de `js/` y los componentes que usan mis pantallas
+# Parte D. Botón por botón
 
-## D1. `src/js/formatos.js`: precios y fechas
+Para cuando el profe señala algo de la pantalla y pregunta **"¿qué pasa cuando toco esto?"** o **"¿dónde está?"**.
+
+**La regla que sirve para cualquier botón:**
+
+```
+1. El botón en el JSX           → onClick={...}   o   type="submit" dentro de un <form onSubmit={...}>
+2. La función que se ejecuta    → alta, modificar, borrar, verDetalle, cargarProducto, confirmar...
+3. Si va al back                → enviar(form) u obtener(url), de js/api.js
+4. Qué cambia en pantalla       → un setAlgo(...) cambia el estado y React vuelve a dibujar
+```
+
+**Cómo buscarlo en vivo:** **Ctrl + Shift + F** con el texto del botón ("Agregar producto") → te lleva al botón → mirás
+su `onClick` o el `onSubmit` de su `<form>` → **Ctrl + clic** sobre la función y te lleva a donde está escrita.
+
+## D1. Productos (`Productos.jsx`)
+
+| Toco... | Dónde está | Qué función corre | Pide al back | Qué cambia en pantalla |
+|---|---|---|---|---|
+| **"Agregar producto"** | Botón: 122. Form: 117 (`onSubmit={alta}`) | `alta` (76) | `POST /api/productos` | "Producto agregado.", el form se vacía y la tabla se recarga |
+| Escribir en **"Buscar producto"** | 130–136 | `setFiltro({ ...filtro, texto })` | Nada | La tabla muestra solo los que coinciden (`visibles`) |
+| Elegir en **"Stock"** | 137 | `setFiltro({ ...filtro, stock })` | Nada | Todos, con stock o agotados |
+| Elegir en **"Ordenar por"** | 142 | `setFiltro({ ...filtro, orden })` | Nada | La tabla se reordena (`filtrarProductos`) |
+| **"Ver"** (en una fila) | 167 | `verDetalle(p.id)` (101) | `GET /api/productos/{id}` | Se abre el modal "Detalle del producto" |
+| **"Cerrar"** (modal de detalle) | 188 | `setDetalle(null)` | Nada | Se cierra el modal |
+| **"Editar"** (en una fila) | 170 | `abrirEdicion(p)` (71) | Nada | Se abre el modal "Editar producto" con los datos cargados |
+| **"Guardar cambios"** | Botón: 200. Form: 196 (`onSubmit={modificar}`) | `modificar` (86) | `PUT /api/productos/{id}` | "Producto actualizado.", se cierra el modal y la tabla se recarga |
+| **"Cancelar"** (modal de edición) | 201 | `setEditando(null)` | Nada | Se cierra sin guardar |
+| Tecla **Escape** en un modal | `Dialogo.jsx` (`onClose`) | `setDetalle(null)` o `setEditando(null)` | Nada | Se cierra el modal |
+| **"Borrar"** (en una fila) | Botón: 175. Form: 174 (`onSubmit={(e) => borrar(e, p)}`) | `borrar` (95) | `DELETE /api/productos/{id}` | Pregunta "¿Borrar...?", "Producto borrado." y la tabla se recarga |
+| **"Reintentar"** (si falló la carga) | `Estado.jsx:18` | `recargar` de `useDatos` | `GET /api/productos?soloDisponibles=true` | Vuelve a cargar la tabla |
+
+### "Ver", paso a paso
+
+```jsx
+// línea 167: el botón de cada fila
+<button type="button" className="secundario" onClick={() => verDetalle(p.id)}>Ver ...</button>
+
+// línea 101: la función
+async function verDetalle(id) {
+  try {
+    setDetalle(await obtenerProducto(id));   // GET /api/productos/{id}
+  } catch (e) {
+    avisarError(e.message);
+  }
+}
+
+// línea 186: el modal se abre solo porque detalle dejó de ser null
+<Dialogo abierto={detalle !== null} onCerrar={() => setDetalle(null)} titulo="Detalle del producto">
+  {detalle && <Detalle datos={datosDetalleProducto(detalle)} />}
+```
+
+1. `onClick={() => verDetalle(p.id)}`: se usa una **función flecha** para pasarle el id de **esa** fila. Si se escribiera
+   `onClick={verDetalle(p.id)}`, se ejecutaría al dibujar la tabla, no al hacer clic.
+2. `verDetalle` pide el producto al back y lo guarda con `setDetalle`.
+3. Al cambiar el estado, React vuelve a dibujar: `detalle !== null` es `true` → `Dialogo` recibe `abierto={true}` → su
+   `useEffect` llama a `showModal()`.
+4. `<Detalle>` muestra los pares que arma `datosDetalleProducto` (ID, nombre, precio, stock).
+5. Si el back falla, `avisarError` muestra el error en rojo y el modal no se abre.
+
+### "Editar" → "Guardar cambios", paso a paso
+
+```jsx
+// línea 170
+<button type="button" className="secundario" onClick={() => abrirEdicion(p)}>Editar ...</button>
+
+// línea 71
+function abrirEdicion(producto) {
+  limpiar();               // borra el mensaje anterior
+  setEditando(producto);   // esto abre el modal
+}
+
+// línea 196: el form del modal
+<form key={editando.id} method="post" data-metodo="PUT" action={"/api/productos/" + editando.id} onSubmit={modificar} noValidate>
+
+// línea 86
+function modificar(e) {
+  e.preventDefault();
+  if (!validarFormulario(e.currentTarget)) return;
+  ejecutar(() => enviar(e.currentTarget), "Producto actualizado.", () => {
+    setEditando(null);     // cierra el modal
+    return recargar();     // recarga la tabla
+  });
+}
+```
+
+1. "Editar" **no va al back**: el producto ya está en la tabla, así que se guarda en `editando` y eso abre el modal.
+2. Los campos arrancan con los valores actuales (`defaultValue={producto.nombre}` en `CamposProducto`).
+3. "Guardar cambios" envía el form: `modificar` valida y `enviar` lee del form el método (**PUT**, por `data-metodo`) y
+   la URL (`/api/productos/4`).
+4. Si sale bien: mensaje, se cierra el modal y la tabla se recarga. Si falla, el error se ve **dentro** del modal.
+
+### "Borrar", paso a paso
+
+```jsx
+// línea 174: cada fila tiene su propio form que declara el método y la URL
+<form method="post" data-metodo="DELETE" action={"/api/productos/" + p.id} onSubmit={(e) => borrar(e, p)}>
+  <button type="submit" className="peligro">Borrar ...</button>
+</form>
+
+// línea 95
+function borrar(e, producto) {
+  e.preventDefault();
+  if (!window.confirm("¿Borrar el producto " + producto.nombre + "?")) return;
+  ejecutar(() => enviar(e.currentTarget), "Producto borrado.", recargar);
+}
+```
+
+1. El botón es `type="submit"` dentro de un form, así que dispara el `onSubmit` de **ese** form.
+2. `window.confirm` pregunta. Si tocás "Cancelar", devuelve `false` y se corta con `return`.
+3. `enviar` hace el **DELETE** que declara el form. El back responde **204** (sin contenido).
+4. "Producto borrado." y la tabla se recarga: el producto ya no aparece (baja lógica).
+
+## D2. Ventas (`Ventas.jsx`)
+
+| Toco... | Dónde está | Qué función corre | Pide al back | Qué cambia en pantalla |
+|---|---|---|---|---|
+| Elegir en **"Producto"** | 115–130 | `setProductoId(e.target.value)` (121) | Nada | Se calcula el subtotal y se fija el máximo de la cantidad |
+| Escribir en **"Cantidad"** | 131–142 | `setCantidad(e.target.value)` (140) | Nada | El subtotal se recalcula al instante |
+| **"Continuar"** | Botón: 148. Form: 113 (`onSubmit={cargarProducto}`) | `cargarProducto` (50) | Nada | Si el producto y la cantidad son válidos, pasa al paso 2 |
+| Elegir en **"Socio"** | 170–184 | `setSocioId(e.target.value)` (176) | Nada | Queda elegido el socio |
+| Elegir una **forma de pago** | 191 | `setPago(f.valor)` | Nada | Queda marcada la forma de pago |
+| **"Volver"** | 201 | `setCargado(false)` | Nada | Vuelve al paso 1 **conservando** el producto y la cantidad |
+| **"Registrar venta"** | Botón: 204. Form: 169 (`onSubmit={confirmar}`) | `confirmar` (68) | `POST /api/ventas` | "Procesando..." → paso 3 con el ticket. La venta aparece en el listado y el stock baja |
+| **"Nueva venta"** | 221 | `reiniciar` (58) | Nada | Vuelve al paso 1 con todo vacío |
+| **"Imprimir comprobante"** | 224 | `window.print()` | Nada | Se abre el diálogo de impresión, y solo se imprime el ticket |
+| **"Actualizar listado"** | 235 | `ventas.recargar` | `GET /api/ventas` | El listado de ventas se vuelve a cargar |
+| **"Reintentar"** (si falló algo) | `Estado.jsx:18` | El `recargar` de lo que falló | El GET que corresponda | Vuelve a cargar esa parte |
+
+### "Continuar" (paso 1 → paso 2), paso a paso
+
+```jsx
+// línea 113
+<form onSubmit={cargarProducto} noValidate>
+  ... <Campo id="venta-producto" as="select" required value={productoId} onChange={(e) => setProductoId(e.target.value)} ...>
+  ... <Campo id="venta-cantidad" type="number" min="1" max={producto?.stock} required value={cantidad} onChange={(e) => setCantidad(e.target.value)} ... />
+  <button type="submit">Continuar</button>
+</form>
+
+// línea 50
+function cargarProducto(e) {
+  e.preventDefault();
+  if (!validarFormulario(e.currentTarget)) return;
+  limpiar();
+  setCargado(true);
+}
+```
+
+1. Al elegir producto y escribir la cantidad, **cada tecla** cambia el estado (`setProductoId`, `setCantidad`) y React
+   recalcula el subtotal. Son campos **controlados**.
+2. "Continuar" **no va al back** (este form no tiene `action`): solo valida.
+3. `validarFormulario` revisa que haya producto (`required`) y que la cantidad esté entre 1 y el stock (`min`/`max`).
+   Si no, `Campo` muestra el error.
+4. `setCargado(true)` → `paso` pasa a valer 2 (`cargado && producto`) → se dibuja el paso 2.
+
+### "Registrar venta"
+
+Está explicado completo en **C3** (la función `confirmar`) y **C7** (de punta a punta). En resumen: valida el socio →
+`procesando = true` → un `POST /api/ventas` → guarda la respuesta en `venta` → `paso` pasa a 3 y se ve el ticket →
+recarga el listado y el stock.
+
+### "Imprimir comprobante"
+
+```jsx
+<button type="button" className="secundario" onClick={() => window.print()}>Imprimir comprobante</button>
+```
+
+`window.print()` es del navegador. Lo que se oculta al imprimir lo decide el CSS de `@media print` (ver C6).
+
+---
+
+# Parte E. Lo de `js/` y los componentes que usan mis pantallas
+
+## E1. `src/js/formatos.js`: precios y fechas
 
 ```js
 const moneda = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS" });
@@ -643,7 +816,7 @@ export function formatoFechaHora(valor) {
 - Da `20/11/2026, 18:00`: año con 4 dígitos y 24 horas.
 - **Dónde lo uso:** la fecha del ticket y la columna "Fecha" del listado de ventas.
 
-## D2. `src/js/validaciones.js`: lo que usan mis formularios
+## E2. `src/js/validaciones.js`: lo que usan mis formularios
 
 ```js
 export const PATRON_TEXTO = "\\s*\\S.*";
@@ -663,11 +836,11 @@ export function validarFormulario(form) {
 - **`validarFormulario(form)`:** lo llaman `alta` y `modificar` (Productos) y `cargarProducto` y `confirmar` (Ventas).
   1. `form.checkValidity()` es **nativo del navegador**: revisa todos los `required`, `min`, `max`, `pattern`...
   2. En cada campo que no cumple, el navegador dispara el evento **`invalid`**. Ese evento lo atrapa `Campo` para
-     mostrar el mensaje debajo del campo (ver D4).
+     mostrar el mensaje debajo del campo (ver E4).
   3. Si hay errores, pone el foco en el primero, así el usuario sabe dónde corregir.
   4. Devuelve `true` o `false`. Si es `false`, la función de la página corta con `return` y no se envía nada.
 
-## D3. `src/js/socios.js`: lo único que usa Ventas
+## E3. `src/js/socios.js`: lo único que usa Ventas
 
 ```js
 export async function listarSociosActivos() {
@@ -680,7 +853,7 @@ Pide los socios (`GET /api/socios`) y deja **solo los activos**: a un socio dado
 el desplegable "Socio" del paso 2. Es `async` porque tiene que **esperar** (`await`) la respuesta del back antes de
 filtrar.
 
-## D4. Los componentes que usan mis pantallas
+## E4. Los componentes que usan mis pantallas
 
 **`Campo.jsx`: el campo de formulario con su error** (lo usan todos los campos de Productos y de Ventas):
 
@@ -804,7 +977,7 @@ Recibe pares `[título, valor]` (los arma `datosDetalleProducto`) y los muestra 
 
 **`Ticket.jsx`:** explicado en C6.
 
-## D5. JavaScript que aparece en mi parte
+## E5. JavaScript que aparece en mi parte
 
 | Qué | Significa | Ejemplo en mi código |
 |---|---|---|
@@ -823,9 +996,9 @@ Recibe pares `[título, valor]` (los arma `datosDetalleProducto`) y los muestra 
 
 ---
 
-# Parte E. Para la defensa
+# Parte F. Para la defensa
 
-## E1. Preguntas probables de mi parte
+## F1. Preguntas probables de mi parte
 
 | Pregunta | Respuesta |
 |---|---|
@@ -850,7 +1023,7 @@ Recibe pares `[título, valor]` (los arma `datosDetalleProducto`) y los muestra 
 | ¿Qué evita el doble clic? | En Ventas, `procesando` deshabilita el botón. En Productos, `useMensaje` ignora el segundo clic con `useRef` |
 | ¿Qué es `async/await`? ¿No era mejor `defer`? | Son cosas distintas: `defer` es para cargar un script en el HTML; `async/await` es para esperar la respuesta del back sin congelar la página. El profe también lo usa |
 
-## E2. Limitaciones de mi parte (decirlas antes de que las encuentren)
+## F2. Limitaciones de mi parte (decirlas antes de que las encuentren)
 
 | Limitación | Cómo se resolvería |
 |---|---|
@@ -860,7 +1033,7 @@ Recibe pares `[título, valor]` (los arma `datosDetalleProducto`) y los muestra 
 | Las validaciones del front se pueden saltear llamando a la API directo | Es normal: el front ayuda al usuario y el back tiene que volver a validar |
 | El login es simulado en el front (los usuarios de prueba están en el código) | Un login real, validado por el back |
 
-## E3. Si piden un cambio en vivo
+## F3. Si piden un cambio en vivo
 
 | Te pueden pedir | Qué tocar |
 |---|---|
